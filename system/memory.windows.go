@@ -24,18 +24,6 @@ import (
 	"strings"
 )
 
-type MEMORYSTATUSEX struct {
-	Length               uint32
-	MemoryLoad           uint32
-	TotalPhys            uint64
-	AvailPhys            uint64
-	TotalPageFile        uint64
-	AvailPageFile        uint64
-	TotalVirtual         uint64
-	AvailVirtual         uint64
-	AvailExtendedVirtual uint64
-}
-
 // getMemoryInfo reads memory and swap information using Windows APIs
 func getMemoryInfo() (MemoryInfo, error) {
 	var memoryInfo = MemoryInfo{
@@ -61,6 +49,7 @@ func getMemoryInfo() (MemoryInfo, error) {
 			return memoryInfo, fmt.Errorf("failed to get memory info via WMI: %w", err)
 		}
 
+		// Parse the output to extract total and free memory
 		var totalKB, freeKB int64
 		lines := strings.Split(string(output), "\n")
 		for _, line := range lines {
@@ -74,6 +63,7 @@ func getMemoryInfo() (MemoryInfo, error) {
 			}
 		}
 
+		// If we have valid swap space information, calculate percentages
 		if totalKB > 0 {
 			totalMB := int(totalKB / 1024)
 			freeMB := int(freeKB / 1024)
@@ -94,6 +84,8 @@ func getMemoryInfo() (MemoryInfo, error) {
 		if err == nil {
 			var totalSwapMB, usedSwapMB int64
 			lines := strings.Split(string(output), "\n")
+
+			// Parse the output to extract total and used swap space
 			for _, line := range lines {
 				line = strings.TrimSpace(line)
 				if strings.HasPrefix(line, "AllocatedBaseSize=") {
@@ -109,6 +101,7 @@ func getMemoryInfo() (MemoryInfo, error) {
 				}
 			}
 
+			// If we have valid swap space information, calculate percentages
 			if totalSwapMB > 0 {
 				swapUsedPercent := int((usedSwapMB * 100) / totalSwapMB)
 				memoryInfo.SwapIsAvailable = true
