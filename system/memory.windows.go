@@ -89,15 +89,15 @@ func getMemoryInfo() (MemoryInfo, error) {
 
 	// Get page file (swap) info
 	if !disabledFeatures.DisableSwap {
-		cmd := exec.Command("wmic", "pagefile", "get", "Size,CurrentUsage", "/format:list")
+		cmd := exec.Command("wmic", "pagefile", "get", "AllocatedBaseSize,CurrentUsage", "/format:list")
 		output, err := cmd.Output()
 		if err == nil {
 			var totalSwapMB, usedSwapMB int64
 			lines := strings.Split(string(output), "\n")
 			for _, line := range lines {
 				line = strings.TrimSpace(line)
-				if strings.HasPrefix(line, "Size=") {
-					value := strings.TrimPrefix(line, "Size=")
+				if strings.HasPrefix(line, "AllocatedBaseSize=") {
+					value := strings.TrimPrefix(line, "AllocatedBaseSize=")
 					if size, err := strconv.ParseInt(value, 10, 64); err == nil {
 						totalSwapMB += size
 					}
