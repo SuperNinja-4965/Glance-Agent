@@ -22,9 +22,6 @@ jobs:
     strategy:
       matrix:
         go-version: ["1.24"]
-    env:
-      BUILD_REWIND_SERVER_SKIP_LINT: false
-      BUILD_REWIND_CLIENT_SKIP_LINT: false
 
     steps:
       - name: Checkout (Full depth)
