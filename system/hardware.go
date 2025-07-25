@@ -90,7 +90,7 @@ func GetSystemInfo() (*SystemInfo, error) {
 	if !disabledFeatures.DisableTemperature {
 		CPUTempIsAvailable = true
 		CPUTemp = getCPUTemperature()
-		if CPUTemp < 0 {
+		if CPUTemp <= 0 {
 			CPUTempIsAvailable = false // If temperature is negative, assume not available
 		}
 	}
