@@ -12,4 +12,10 @@ services:
       - PORT=9012
       - IGNORE_MOUNTPOINTS=
       - OVERRIDE_IGNORED_MOUNTPOINTS=
+      - DISABLE_CPU_LOAD="false"
+      - DISABLE_TEMPERATURE="false"
+      - DISABLE_MEMORY="false"
+      - DISABLE_SWAP="false"
+      - DISABLE_DISK="false"
+      - DISABLE_HOST="false"
     restart: unless-stopped
