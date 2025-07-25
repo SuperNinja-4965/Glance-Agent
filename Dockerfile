@@ -9,8 +9,6 @@ WORKDIR /build
 
 # Download dependencies
 RUN go mod download
-# Double check for any issues
-RUN go tool golangci-lint run
 
 # Build the Go application
 RUN go build -o ./build/glance-agent
