@@ -7,7 +7,7 @@ import (
 )
 
 // AuthMiddleware validates Bearer token authentication for protected routes
-func AuthMiddleware(secretToken string) func(http.Handler) http.Handler {
+func Middleware(secretToken string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")

@@ -20,7 +20,7 @@ func init() {
 }
 
 // sysinfoHandler handles requests for system information
-func sysinfoHandler(w http.ResponseWriter, r *http.Request) {
+func sysinfoHandler(w http.ResponseWriter, _ *http.Request) {
 	// Get comprehensive system information
 	info, err := system.GetSystemInfo()
 	if err != nil {
@@ -55,7 +55,7 @@ func main() {
 
 	// Protected API routes for system information
 	r.Route("/api/sysinfo", func(r chi.Router) {
-		r.Use(auth.AuthMiddleware(env.GetSecretToken())) // Pass the secret token
+		r.Use(auth.Middleware(env.GetSecretToken())) // Pass the secret token
 		r.Get("/all", sysinfoHandler)
 	})
 

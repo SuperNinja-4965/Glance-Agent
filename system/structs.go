@@ -31,6 +31,8 @@ type MountPoint struct {
 }
 
 // SystemInfo is the main structure containing all system metrics
+//
+//nolint:revive // Keeping SystemInfo name for clarity in external packages
 type SystemInfo struct {
 	HostInfoIsAvailable bool         `json:"host_info_is_available"` // Whether host information is available
 	BootTime            int64        `json:"boot_time"`              // System boot time as Unix timestamp
