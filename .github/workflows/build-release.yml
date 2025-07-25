@@ -49,6 +49,10 @@ jobs:
           mkdir build
           go build -o ./build/Glance-Agent
 
+      - name: Compress Binary with UPX
+        run: |
+          upx --best ./build/Glance-Agent
+
       - name: Set Release Prerelease Status
         id: prerelease_check
         run: |
