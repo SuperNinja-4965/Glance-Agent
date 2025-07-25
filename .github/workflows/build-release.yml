@@ -80,7 +80,7 @@ jobs:
           upx --best ./build/glance-agent.arm
           upx --best ./build/glance-agent.i386
           upx --best ./build/glance-agent.x86_64.exe
-          upx --best ./build/glance-agent.aarch64.exe
+          # upx --best ./build/glance-agent.aarch64.exe # Disabled as this is not supported by UPX
 
       - name: Set Release Prerelease Status
         id: prerelease_check
