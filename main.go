@@ -29,9 +29,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+const Version = "0.1.0"
+
 // init runs before main() and initializes configuration
 func init() {
-	env.LoadConfig() // Load environment variables from .env file
+	env.LoadConfig(Version) // Load environment variables from .env file
 }
 
 // sysinfoHandler handles requests for system information

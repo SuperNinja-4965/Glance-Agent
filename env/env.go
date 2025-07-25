@@ -30,6 +30,7 @@ var (
 	ignoreMountpoints         string // Comma-separated list of mountpoints to ignore
 	overrideIgnoreMountpoints string // Comma-separated list to override default ignored mountpoints
 	showHelp                  bool   // Show help message
+	appVersion                string // Application version, set by build process
 )
 
 // GetSecretToken returns the configured secret token
@@ -44,7 +45,7 @@ func GetPort() string {
 
 // showUsage displays help information
 func showUsage() {
-	fmt.Printf("Glance Agent - Linux System Monitoring Agent\n\n")
+	fmt.Printf("Glance Agent %s - Linux System Monitoring Agent\n\n", appVersion)
 	fmt.Println("USAGE:")
 	fmt.Printf("  %s [OPTIONS]\n\n", filepath.Base(os.Args[0]))
 	fmt.Println("OPTIONS:")
@@ -68,7 +69,9 @@ func showUsage() {
 	fmt.Printf("Glance Agent Copyright (C) Ava Glass <SuperNinja_4965> \nThis program comes as is with ABSOLUTELY NO WARRANTY. \nThis is free software, and you are welcome to redistribute it \nunder certain conditions; For details please visit https://github.com/SuperNinja-4965/Glance-Agent/blob/main/LICENSE.")
 }
 
-func LoadConfig() {
+func LoadConfig(version string) {
+	appVersion = version // Set the application version
+
 	// Define command line flags
 	flag.StringVar(&secretToken, "token", "", "Bearer token for API authentication (required)")
 	flag.StringVar(&port, "port", "9012", "Server port number")
