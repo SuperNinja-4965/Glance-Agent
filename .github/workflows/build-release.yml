@@ -1,0 +1,76 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*" # Version tags like v1.0.0
+      - "beta-*" # Version tags like beta-0.0.1
+
+# Allow one concurrent deployment
+concurrency:
+  group: "release"
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  # Single deploy job since we're just deploying
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ["1.24"]
+    env:
+      BUILD_REWIND_SERVER_SKIP_LINT: false
+      BUILD_REWIND_CLIENT_SKIP_LINT: false
+
+    steps:
+      - name: Checkout (Full depth)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Install UPX
+        run: |
+          bash "$GITHUB_WORKSPACE/scripts/install-upx-linux.sh"
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Lint Code
+        run: go tool golangci-lint run
+
+      - name: Build Agent
+        run: |
+          mkdir build
+          go build -o ./build/Glance-Agent
+
+      - name: Set Release Prerelease Status
+        id: prerelease_check
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          IS_PRERELEASE="false"
+
+          if [[ "$TAG_NAME" == *"beta"* || "$TAG_NAME" == *"pre" || "$TAG_NAME" == *"rc"* ]]; then
+            IS_PRERELEASE="true"
+            echo "This is a pre-release version"
+          fi
+
+          echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ steps.prerelease_check.outputs.IS_PRERELEASE }}
+          generate_release_notes: true
+          files: |
+            ./build/Glance-Agent
