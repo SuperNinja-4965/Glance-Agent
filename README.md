@@ -238,7 +238,6 @@ sudo mkdir -p /opt/glance-agent
 sudo cp ./glance-agent.x86_64 /opt/glance-agent/glance-agent
 sudo chown root:root /opt/glance-agent/glance-agent
 sudo chmod +x /opt/glance-agent/glance-agent
-
 ```
 
 ### Enable and Start
