@@ -25,6 +25,21 @@ import (
 
 // getMemoryInfo reads memory and swap information from /proc/meminfo
 func getMemoryInfo() (MemoryInfo, error) {
+	var memoryInfo = MemoryInfo{
+		MemoryIsAvailable: false,
+		TotalMB:           0,
+		UsedMB:            0,
+		UsedPercent:       0,
+		SwapIsAvailable:   false,
+		SwapTotalMB:       0,
+		SwapUsedMB:        0,
+		SwapUsedPercent:   0,
+	}
+	if disabledFeatures.DisableMemory && disabledFeatures.DisableSwap {
+		return memoryInfo, nil // Skip if both memory and swap monitoring are disabled
+	}
+
+	// Read the memory and swap information from /proc/meminfo
 	file, err := os.Open("/proc/meminfo")
 	if err != nil {
 		return MemoryInfo{}, err
@@ -51,32 +66,55 @@ func getMemoryInfo() (MemoryInfo, error) {
 		memInfo[key] = value * 1024 // Convert from kB to bytes
 	}
 
-	// Calculate memory usage statistics
-	totalMB := int(memInfo["MemTotal"] / (1024 * 1024))
-	availableMB := int(memInfo["MemAvailable"] / (1024 * 1024))
-	usedMB := totalMB - availableMB
-	usedPercent := 0
-	if totalMB > 0 {
-		usedPercent = (usedMB * 100) / totalMB
+	// Only proceed if we are checking memory
+	if !disabledFeatures.DisableMemory {
+		// Calculate memory usage statistics
+		totalMB := int(memInfo["MemTotal"] / (1024 * 1024))
+		memoryIsAvailable := memInfo["MemTotal"] > 0
+
+		// Check if MemAvailable exists (Linux 3.14+), fallback to calculation if not
+		var availableMB int
+		if memAvailable, exists := memInfo["MemAvailable"]; exists {
+			availableMB = int(memAvailable / (1024 * 1024))
+		} else {
+			// Fallback calculation for older kernels
+			freeMB := int(memInfo["MemFree"] / (1024 * 1024))
+			buffersMB := int(memInfo["Buffers"] / (1024 * 1024))
+			cachedMB := int(memInfo["Cached"] / (1024 * 1024))
+			availableMB = freeMB + buffersMB + cachedMB
+		}
+
+		usedMB := totalMB - availableMB
+		usedPercent := 0
+		if totalMB > 0 {
+			usedPercent = (usedMB * 100) / totalMB
+		}
+
+		memoryInfo.MemoryIsAvailable = memoryIsAvailable
+		memoryInfo.TotalMB = totalMB
+		memoryInfo.UsedMB = usedMB
+		memoryInfo.UsedPercent = usedPercent
 	}
 
-	// Calculate swap usage statistics
-	swapTotalMB := int(memInfo["SwapTotal"] / (1024 * 1024))
-	swapFreeMB := int(memInfo["SwapFree"] / (1024 * 1024))
-	swapUsedMB := swapTotalMB - swapFreeMB
-	swapUsedPercent := 0
-	if swapTotalMB > 0 {
-		swapUsedPercent = (swapUsedMB * 100) / swapTotalMB
+	// Only proceed if we are checking swap
+	if disabledFeatures.DisableSwap {
+		// Calculate swap usage statistics
+		swapTotalMB := int(memInfo["SwapTotal"] / (1024 * 1024))
+		swapFreeMB := int(memInfo["SwapFree"] / (1024 * 1024))
+		swapUsedMB := swapTotalMB - swapFreeMB
+		swapUsedPercent := 0
+		if swapTotalMB > 0 {
+			swapUsedPercent = (swapUsedMB * 100) / swapTotalMB
+		}
+
+		// Determine if swap is available (some systems have no swap configured)
+		swapIsAvailable := swapTotalMB > 0
+
+		memoryInfo.SwapIsAvailable = swapIsAvailable
+		memoryInfo.SwapTotalMB = swapTotalMB
+		memoryInfo.SwapUsedMB = swapUsedMB
+		memoryInfo.SwapUsedPercent = swapUsedPercent
 	}
 
-	return MemoryInfo{
-		MemoryIsAvailable: true,
-		TotalMB:           totalMB,
-		UsedMB:            usedMB,
-		UsedPercent:       usedPercent,
-		SwapIsAvailable:   true,
-		SwapTotalMB:       swapTotalMB,
-		SwapUsedMB:        swapUsedMB,
-		SwapUsedPercent:   swapUsedPercent,
-	}, nil
+	return memoryInfo, nil
 }

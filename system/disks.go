@@ -102,6 +102,10 @@ func shouldIgnoreMountpoint(mountpoint, fstype string) bool {
 
 // getMountPoints reads filesystem mount information and calculates disk usage
 func getMountPoints() ([]MountPoint, error) {
+	if disabledFeatures.DisableDisk {
+		return []MountPoint{}, nil // Skip if disk monitoring is disabled
+	}
+
 	file, err := os.Open("/proc/mounts")
 	if err != nil {
 		return nil, err
@@ -134,10 +138,16 @@ func getMountPoints() ([]MountPoint, error) {
 			continue // Skip if we can't get stats
 		}
 
+		// Use fragment size if available, otherwise fall back to block size
+		blockSize := uint64(stat.Frsize)
+		if blockSize == 0 {
+			blockSize = uint64(stat.Bsize)
+		}
+
 		// Calculate disk usage in bytes
-		total := stat.Blocks * uint64(stat.Bsize) // Total space
-		free := stat.Bavail * uint64(stat.Bsize)  // Available space
-		used := total - free                      // Used space
+		total := stat.Blocks * blockSize     // Total space
+		available := stat.Bavail * blockSize // Available space for non-root users
+		used := total - available            // Actually used space
 
 		// Convert to megabytes
 		totalMB := int(total / (1024 * 1024))

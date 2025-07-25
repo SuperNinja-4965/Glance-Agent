@@ -18,6 +18,7 @@ package env
 import (
 	"flag"
 	"fmt"
+	"glance-agent/system"
 	"log"
 	"os"
 	"path/filepath"
@@ -25,12 +26,13 @@ import (
 
 // Variables to hold configuration
 var (
-	secretToken               string // Bearer token for API authentication
-	port                      string // Server port number
-	ignoreMountpoints         string // Comma-separated list of mountpoints to ignore
-	overrideIgnoreMountpoints string // Comma-separated list to override default ignored mountpoints
-	showHelp                  bool   // Show help message
-	appVersion                string // Application version, set by build process
+	secretToken               string                     // Bearer token for API authentication
+	port                      string                     // Server port number
+	ignoreMountpoints         string                     // Comma-separated list of mountpoints to ignore
+	overrideIgnoreMountpoints string                     // Comma-separated list to override default ignored mountpoints
+	showHelp                  bool                       // Show help message
+	appVersion                string                     // Application version, set by build process
+	featureToggles            system.FeatureToggleStruct // Feature toggles
 )
 
 // GetSecretToken returns the configured secret token
@@ -55,9 +57,16 @@ func showUsage() {
 	fmt.Println("  PORT                           Server port number (default: 9012)")
 	fmt.Println("  IGNORE_MOUNTPOINTS             Comma-separated additional mountpoints to ignore")
 	fmt.Println("  OVERRIDE_IGNORED_MOUNTPOINTS   Comma-separated override for default ignored mountpoints")
+	fmt.Println("  DISABLE_CPU_LOAD                Disable CPU load monitoring (default: true)")
+	fmt.Println("  DISABLE_TEMPERATURE             Disable temperature monitoring (default: true)")
+	fmt.Println("  DISABLE_MEMORY                  Disable memory monitoring (default: true)")
+	fmt.Println("  DISABLE_SWAP                    Disable swap monitoring (default: true)")
+	fmt.Println("  DISABLE_DISK                    Disable disk monitoring (default: true)")
+	fmt.Println("  DISABLE_HOST                    Disable host information (default: true)")
 	fmt.Println("\nEXAMPLES:")
 	fmt.Printf("  %s -token mytoken -port 8080\n", filepath.Base(os.Args[0]))
 	fmt.Printf("  SECRET_TOKEN=mytoken %s\n", filepath.Base(os.Args[0]))
+	fmt.Printf("  %s -token mytoken -disable-temp -disable-swap\n", filepath.Base(os.Args[0]))
 	fmt.Println("\n.ENV FILE:")
 	fmt.Println("  The application will automatically load a .env file from the same directory as the binary.")
 	fmt.Println("  Format:")
@@ -65,6 +74,8 @@ func showUsage() {
 	fmt.Println("  PORT=9012")
 	fmt.Println("  IGNORE_MOUNTPOINTS=/mnt/backup,/media")
 	fmt.Println("  OVERRIDE_IGNORED_MOUNTPOINTS=/snap,/boot/efi")
+	fmt.Println("  DISABLE_CPU_LOAD=true")
+	fmt.Println("  DISABLE_TEMPERATURE=true")
 	fmt.Println("")
 	fmt.Printf("Glance Agent Copyright (C) Ava Glass <SuperNinja_4965> \nThis program comes as is with ABSOLUTELY NO WARRANTY. \nThis is free software, and you are welcome to redistribute it \nunder certain conditions; For details please visit https://github.com/SuperNinja-4965/Glance-Agent/blob/main/LICENSE.")
 }
@@ -78,6 +89,13 @@ func LoadConfig(version string) {
 	flag.StringVar(&ignoreMountpoints, "ignore-mounts", "", "Comma-separated list of additional mountpoints to ignore")
 	flag.StringVar(&overrideIgnoreMountpoints, "override-mounts", "", "Comma-separated list to override default ignored mountpoints")
 	flag.BoolVar(&showHelp, "help", false, "Show the help message")
+
+	flag.BoolVar(&featureToggles.DisableCPULoad, "disable-cpu", false, "Disable CPU load monitoring")
+	flag.BoolVar(&featureToggles.DisableTemperature, "disable-temp", false, "Disable temperature monitoring")
+	flag.BoolVar(&featureToggles.DisableMemory, "disable-memory", false, "Disable memory monitoring")
+	flag.BoolVar(&featureToggles.DisableSwap, "disable-swap", false, "Disable swap monitoring")
+	flag.BoolVar(&featureToggles.DisableDisk, "disable-disk", false, "Disable disk monitoring")
+	flag.BoolVar(&featureToggles.DisableHost, "disable-host", false, "Disable host information")
 
 	// Custom usage function
 	flag.Usage = showUsage
@@ -104,6 +122,10 @@ func LoadConfig(version string) {
 
 	// Configure mountpoints
 	configureMountpoints()
+
+	// Set what features are enabled/disabled
+	system.SetFeatureToggles(featureToggles)
+
 }
 
 // configureFromSources sets configuration from multiple sources with precedence:
@@ -114,6 +136,12 @@ func configureFromSources() {
 	// Check if flags were actually set by user
 	tokenSet := false
 	portSet := false
+	cpuFlagSet := false
+	tempFlagSet := false
+	memoryFlagSet := false
+	swapFlagSet := false
+	diskFlagSet := false
+	hostFlagSet := false
 
 	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
@@ -121,6 +149,18 @@ func configureFromSources() {
 			tokenSet = true
 		case "port":
 			portSet = true
+		case "disable-cpu":
+			cpuFlagSet = true
+		case "disable-temp":
+			tempFlagSet = true
+		case "disable-memory":
+			memoryFlagSet = true
+		case "disable-swap":
+			swapFlagSet = true
+		case "disable-disk":
+			diskFlagSet = true
+		case "disable-host":
+			hostFlagSet = true
 		}
 	})
 
@@ -146,5 +186,42 @@ func configureFromSources() {
 	// OVERRIDE_IGNORED_MOUNTPOINTS: CLI flag > env var
 	if overrideIgnoreMountpoints == "" {
 		overrideIgnoreMountpoints = os.Getenv("OVERRIDE_IGNORED_MOUNTPOINTS")
+	}
+
+	// Feature toggles: CLI flag > env var > default (true)
+	if !cpuFlagSet {
+		if envVal := os.Getenv("DISABLE_CPU_LOAD"); envVal != "" {
+			featureToggles.DisableCPULoad = envVal == "true"
+		}
+	}
+
+	if !tempFlagSet {
+		if envVal := os.Getenv("DISABLE_TEMPERATURE"); envVal != "" {
+			featureToggles.DisableTemperature = envVal == "true"
+		}
+	}
+
+	if !memoryFlagSet {
+		if envVal := os.Getenv("DISABLE_MEMORY"); envVal != "" {
+			featureToggles.DisableMemory = envVal == "true"
+		}
+	}
+
+	if !swapFlagSet {
+		if envVal := os.Getenv("DISABLE_SWAP"); envVal != "" {
+			featureToggles.DisableSwap = envVal == "true"
+		}
+	}
+
+	if !diskFlagSet {
+		if envVal := os.Getenv("DISABLE_DISK"); envVal != "" {
+			featureToggles.DisableDisk = envVal == "true"
+		}
+	}
+
+	if !hostFlagSet {
+		if envVal := os.Getenv("DISABLE_HOST"); envVal != "" {
+			featureToggles.DisableHost = envVal == "true"
+		}
 	}
 }

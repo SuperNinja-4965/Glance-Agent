@@ -22,6 +22,22 @@ import (
 	"strings"
 )
 
+type FeatureToggleStruct struct {
+	// Feature toggles
+	DisableCPULoad     bool // disable CPU load monitoring
+	DisableTemperature bool // disable temperature monitoring
+	DisableMemory      bool // disable memory monitoring
+	DisableSwap        bool // disable swap monitoring
+	DisableDisk        bool // disable disk monitoring
+	DisableHost        bool // disable host information
+}
+
+var disabledFeatures FeatureToggleStruct
+
+func SetFeatureToggles(t FeatureToggleStruct) {
+	disabledFeatures = t
+}
+
 // getHostInfo retrieves hostname, platform information, and boot time
 func getHostInfo() (string, string, int64, error) {
 	// Get system hostname
@@ -63,10 +79,15 @@ func getHostInfo() (string, string, int64, error) {
 
 // GetSystemInfo collects and returns comprehensive system information
 func GetSystemInfo() (*SystemInfo, error) {
-	// Gather host information
-	hostname, platform, bootTime, err := getHostInfo()
-	if err != nil {
-		return nil, err
+	var hostname, platform string
+	var bootTime int64
+	if !disabledFeatures.DisableHost {
+		// Gather host information
+		var err error
+		hostname, platform, bootTime, err = getHostInfo()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Get CPU load averages
@@ -74,9 +95,6 @@ func GetSystemInfo() (*SystemInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// Get number of CPU cores for load percentage calculation
-	cpuCount := runtime.NumCPU()
 
 	// Gather memory information
 	memInfo, err := getMemoryInfo()
@@ -90,30 +108,46 @@ func GetSystemInfo() (*SystemInfo, error) {
 		return nil, err
 	}
 
-	// Calculate load percentages based on CPU count
-	// Load average of 1.0 = 100% utilization on single-core system
-	load1Percent := int((load1 / float64(cpuCount)) * 100)
-	if load1Percent > 100 {
-		load1Percent = 100 // Cap at 100%
+	load1Percent := 0
+	load15Percent := 0
+	if !disabledFeatures.DisableCPULoad {
+		// Get number of CPU cores for load percentage calculation
+		cpuCount := runtime.NumCPU()
+		// Calculate load percentages based on CPU count
+		// Load average of 1.0 = 100% utilization on single-core system
+		load1Percent = int((load1 / float64(cpuCount)) * 100)
+		if load1Percent > 100 {
+			load1Percent = 100 // Cap at 100%
+		}
+
+		load15Percent = int((load15 / float64(cpuCount)) * 100)
+		if load15Percent > 100 {
+			load15Percent = 100 // Cap at 100%
+		}
 	}
 
-	load15Percent := int((load15 / float64(cpuCount)) * 100)
-	if load15Percent > 100 {
-		load15Percent = 100 // Cap at 100%
+	CPUTempIsAvailable := false
+	CPUTemp := 0
+	if !disabledFeatures.DisableTemperature {
+		CPUTempIsAvailable = true
+		CPUTemp := getCPUTemperature()
+		if CPUTemp < 0 {
+			CPUTempIsAvailable = false // If temperature is negative, assume not available
+		}
 	}
 
 	// Assemble complete system information
 	info := &SystemInfo{
-		HostInfoIsAvailable: true,
+		HostInfoIsAvailable: !disabledFeatures.DisableHost,
 		BootTime:            bootTime,
 		Hostname:            hostname,
 		Platform:            platform,
 		CPU: CPUInfo{
-			LoadIsAvailable:        true,
+			LoadIsAvailable:        !disabledFeatures.DisableCPULoad,
 			Load1Percent:           load1Percent,
 			Load15Percent:          load15Percent,
-			TemperatureIsAvailable: true,
-			TemperatureC:           getCPUTemperature(),
+			TemperatureIsAvailable: CPUTempIsAvailable,
+			TemperatureC:           CPUTemp,
 		},
 		Memory:      memInfo,
 		MountPoints: mountPoints,
