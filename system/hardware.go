@@ -16,10 +16,7 @@ package system
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import (
-	"os"
 	"runtime"
-	"strconv"
-	"strings"
 )
 
 type FeatureToggleStruct struct {
@@ -36,45 +33,6 @@ var disabledFeatures FeatureToggleStruct
 
 func SetFeatureToggles(t FeatureToggleStruct) {
 	disabledFeatures = t
-}
-
-// getHostInfo retrieves hostname, platform information, and boot time
-func getHostInfo() (string, string, int64, error) {
-	// Get system hostname
-	hostname, err := os.Hostname()
-	if err != nil {
-		return "", "", 0, err
-	}
-
-	// Get platform/OS information from /etc/os-release
-	platform := "Linux" // Default fallback
-	if data, err := os.ReadFile("/etc/os-release"); err == nil {
-		lines := strings.Split(string(data), "\n")
-		for _, line := range lines {
-			if strings.HasPrefix(line, "PRETTY_NAME=") {
-				// Extract the pretty name and remove quotes
-				platform = strings.Trim(strings.TrimPrefix(line, "PRETTY_NAME="), "\"")
-				break
-			}
-		}
-	}
-
-	// Get system boot time from /proc/stat
-	bootTime := int64(0)
-	if data, err := os.ReadFile("/proc/stat"); err == nil {
-		lines := strings.Split(string(data), "\n")
-		for _, line := range lines {
-			if strings.HasPrefix(line, "btime ") {
-				// Parse boot time as Unix timestamp
-				if bt, err := strconv.ParseInt(strings.TrimPrefix(line, "btime "), 10, 64); err == nil {
-					bootTime = bt
-				}
-				break
-			}
-		}
-	}
-
-	return hostname, platform, bootTime, nil
 }
 
 // GetSystemInfo collects and returns comprehensive system information

@@ -1,3 +1,5 @@
+//go:build linux
+
 package system
 
 // Copyright (C) Ava Glass <SuperNinja_4965>
