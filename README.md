@@ -1,6 +1,6 @@
 # Glance Agent
 
-A lightweight Linux system monitoring agent that provides system metrics via a secure HTTP API. This agent is designed to work with Glance dashboard for real-time system monitoring.
+A lightweight system monitoring agent for Linux and Windows that provides system metrics via a secure HTTP API. This agent is designed to work with Glance dashboard for real-time system monitoring.
 
 ## Features
 
@@ -11,8 +11,13 @@ A lightweight Linux system monitoring agent that provides system metrics via a s
 
 ## Requirements
 
-- **Linux operating system** (application only builds on Linux)
+- **Linux/Windows operating system**
 - **Go 1.24+** for building from source
+
+## Known Issues
+
+- When running within docker OS information is incorrect. On linux systems this can be resolved by adding a volume passing in the host os-release info `/etc/os-release:/etc/os-release:ro`
+- On Windows or within docker CPU temperature readings often do not work.
 
 ## Installation
 
@@ -204,11 +209,19 @@ The following mountpoints are ignored by default:
 - `/tmp`, `/var/tmp`, `/dev/shm`, `/run/lock`
 - `/sys/fs/cgroup`, `/boot/grub`, `/var/lib/docker`
 
+#### Windows
+
+On Windows `A:/` and `B:/` are ignored by default
+
 ### Default Ignored Filesystems
 
 - `proc`, `sysfs`, `devtmpfs`, `tmpfs`, `cgroup`, `cgroup2`
 - `pstore`, `bpf`, `debugfs`, `tracefs`, `securityfs`
 - `hugetlbfs`, `mqueue`, `fusectl`, `configfs`
+
+#### Windows
+
+- `none`
 
 ### Custom Configuration
 
