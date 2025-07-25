@@ -128,7 +128,7 @@ jobs:
             type=semver,pattern=v{{major}}.{{minor}}
             type=semver,pattern=v{{major}}.{{minor}}.{{patch}}
             type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
+            type=sha
 
       - name: Login to Docker Hub
         if: github.event_name != 'pull_request'
