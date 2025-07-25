@@ -70,6 +70,8 @@ jobs:
           GOOS=linux GOARCH=arm64 go build -o ./build/glance-agent.aarch64
           GOOS=linux GOARCH=arm go build -o ./build/glance-agent.arm
           GOOS=linux GOARCH=386 go build -o ./build/glance-agent.i386
+          GOOS=windows GOARCH=amd64 go build -o ./build/glance-agent.x86_64.exe
+          GOOS=windows GOARCH=arm64 go build -o ./build/glance-agent.aarch64.exe
 
       - name: Compress Binary with UPX
         run: |
@@ -77,6 +79,8 @@ jobs:
           upx --best ./build/glance-agent.aarch64
           upx --best ./build/glance-agent.arm
           upx --best ./build/glance-agent.i386
+          upx --best ./build/glance-agent.x86_64.exe
+          upx --best ./build/glance-agent.aarch64.exe
 
       - name: Set Release Prerelease Status
         id: prerelease_check
@@ -103,6 +107,8 @@ jobs:
             ./build/glance-agent.aarch64
             ./build/glance-agent.arm
             ./build/glance-agent.i386
+            ./build/glance-agent.x86_64.exe
+            ./build/glance-agent.aarch64.exe
 
   build-docker:
     runs-on: ubuntu-latest

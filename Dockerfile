@@ -13,6 +13,11 @@ RUN go mod download
 # Build the Go application
 RUN go build -o ./build/glance-agent
 
+# Install UPX for binary compression
+RUN apk add --no-cache upx
+
+RUN upx --best ./build/glance-agent
+
 # Use Alpine as the base image
 FROM alpine:latest
 
