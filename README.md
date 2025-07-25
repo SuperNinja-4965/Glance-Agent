@@ -6,7 +6,8 @@ A lightweight Linux system monitoring agent that provides system metrics via a s
 
 - **System Information**: CPU load, memory usage, disk usage, and host details
 - **Security**: Bearer token authentication, local IP restriction and rate limited
-- **Configurable**: Customizable ignored mountpoints and flexible configuration
+- **Configurable**: Customizable ignored mountpoints, flexible configuration, and selective feature monitoring
+- **Feature Toggles**: Enable or disable specific monitoring features (CPU, memory, disk, temperature, swap, host info)
 
 ## Requirements
 
@@ -48,6 +49,14 @@ export IGNORE_MOUNTPOINTS="/mnt/backup,/media,/opt/custom"
 
 # Override default ignored mountpoints completely
 export OVERRIDE_IGNORED_MOUNTPOINTS="/snap,/boot/efi,/custom"
+
+# Feature toggles (default: all features enabled)
+export DISABLE_CPU_LOAD="false"
+export DISABLE_TEMPERATURE="false"
+export DISABLE_MEMORY="false"
+export DISABLE_SWAP="false"
+export DISABLE_DISK="false"
+export DISABLE_HOST="false"
 ```
 
 ### .env File Configuration
@@ -60,6 +69,10 @@ SECRET_TOKEN=your-secret-token-here
 PORT=9012
 IGNORE_MOUNTPOINTS=/mnt/backup,/media,/opt/custom
 OVERRIDE_IGNORED_MOUNTPOINTS=/snap,/boot/efi
+
+# Disable specific features (optional)
+DISABLE_TEMPERATURE=true
+DISABLE_SWAP=true
 ```
 
 ### Command Line Flags
@@ -74,6 +87,12 @@ Available flags:
 - `-port`: Server port number (default: 9012)
 - `-ignore-mounts`: Comma-separated list of additional mountpoints to ignore
 - `-override-mounts`: Comma-separated list to override default ignored mountpoints
+- `-disable-cpu`: Disable CPU load monitoring
+- `-disable-temp`: Disable temperature monitoring
+- `-disable-memory`: Disable memory monitoring
+- `-disable-swap`: Disable swap monitoring
+- `-disable-disk`: Disable disk monitoring
+- `-disable-host`: Disable host information
 - `-help`: Show help message
 
 ## Usage
@@ -91,8 +110,29 @@ SECRET_TOKEN="my-secure-token" ./glance-agent
 # Using command line flags
 ./glance-agent -token my-secure-token -port 8080
 
+# Disable specific features
+./glance-agent -token my-secure-token -disable-temp -disable-swap
+
 # Combining methods (CLI flags override env vars and .env file)
-./glance-agent -token cli-token -ignore-mounts "/custom/mount"
+./glance-agent -token cli-token -ignore-mounts "/custom/mount" -disable-disk
+```
+
+### Feature-Specific Examples
+
+```bash
+# Monitor only CPU and memory (disable everything else)
+./glance-agent -token my-token -disable-temp -disable-swap -disable-disk -disable-host
+
+# Environment variable approach
+export SECRET_TOKEN="my-token"
+export DISABLE_TEMPERATURE="true"
+export DISABLE_SWAP="true"
+export DISABLE_DISK="true"
+export DISABLE_HOST="true"
+./glance-agent
+
+# Minimal monitoring (only host info)
+./glance-agent -token my-token -disable-cpu -disable-temp -disable-memory -disable-swap -disable-disk
 ```
 
 ### API Endpoints
@@ -120,9 +160,11 @@ curl -H "Authorization: Bearer your-secret-token" \
     "temperature": 45
   },
   "memory": {
+    "memory_is_available": true,
     "total_mb": 8192,
     "used_mb": 4096,
     "used_percent": 50,
+    "swap_is_available": true,
     "swap_total_mb": 2048,
     "swap_used_mb": 0,
     "swap_used_percent": 0
@@ -138,6 +180,19 @@ curl -H "Authorization: Bearer your-secret-token" \
   ]
 }
 ```
+
+## Feature Toggle Details
+
+### Available Features
+
+| Feature     | CLI Flag           | Environment Variable  | Description                                    |
+| ----------- | ------------------ | --------------------- | ---------------------------------------------- |
+| CPU Load    | `--disable-cpu`    | `DISABLE_CPU_LOAD`    | Disables the CPU load averages and percentages |
+| Temperature | `--disable-temp`   | `DISABLE_TEMPERATURE` | Disables the CPU temperature monitoring        |
+| Memory      | `--disable-memory` | `DISABLE_MEMORY`      | Disables the RAM usage statistics              |
+| Swap        | `--disable-swap`   | `DISABLE_SWAP`        | Disables the Swap usage statistics             |
+| Disk        | `--disable-disk`   | `DISABLE_DISK`        | Disables the Disk usage for all mountpoints    |
+| Host Info   | `--disable-host`   | `DISABLE_HOST`        | Disables the Hostname, platform, boot time     |
 
 ## Ignored Mountpoints
 
@@ -198,6 +253,17 @@ echo "SECRET_TOKEN=test-token" > .env
 # Test in another terminal
 curl -H "Authorization: Bearer test-token" \
      http://localhost:9012/api/sysinfo/all | jq '.'
+```
+
+### Testing Disabled Features
+
+```bash
+# Test with only CPU monitoring enabled
+./glance-agent -token test-token -disable-temp -disable-memory -disable-swap -disable-disk -disable-host
+
+# Verify response contains only CPU data
+curl -H "Authorization: Bearer test-token" \
+     http://localhost:9012/api/sysinfo/all | jq '.cpu'
 ```
 
 ## Deployment

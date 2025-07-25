@@ -97,7 +97,7 @@ func getMemoryInfo() (MemoryInfo, error) {
 	}
 
 	// Only proceed if we are checking swap
-	if disabledFeatures.DisableSwap {
+	if !disabledFeatures.DisableSwap {
 		// Calculate swap usage statistics
 		swapTotalMB := int(memInfo["SwapTotal"] / (1024 * 1024))
 		swapFreeMB := int(memInfo["SwapFree"] / (1024 * 1024))
