@@ -248,47 +248,28 @@ sudo systemctl enable glance-agent
 sudo systemctl start glance-agent
 ```
 
-## Troubleshooting
+> [!WARNING]
+> While the application is designed to be as secure as reasonable it is recommended you restrict what clients can access the api using your system's firewall
 
-### Common Issues
+## License
 
-**Application won't start:**
+This software is licenced with the GPL v3 License.
 
-- Check that `SECRET_TOKEN` is set via environment variable, .env file, or `-token` flag
-- Verify port is not already in use with `netstat -ln | grep :9012`
-- Check that .env file exists in the same directory as the binary
+```
+Copyright (C) Ava Glass <SuperNinja_4965>
 
-**Connection refused:**
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-- Ensure you're connecting from a local IP address (127.0.0.1, 192.168.x.x, etc.)
-- Check firewall settings: `sudo ufw status`
-- Verify the application is listening: `netstat -ln | grep :9012`
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
 
-**Authentication failed:**
-
-- Verify Bearer token format: `Authorization: Bearer your-token`
-- Check token matches `SECRET_TOKEN` exactly (case-sensitive)
-- Ensure no extra spaces in token
-
-**Configuration not loading:**
-
-- Check .env file is in the same directory as the binary
-- Verify .env file has proper format (no spaces around `=`)
-- Check file permissions on .env file
-
-### Logs
-
-The application logs to stdout/stderr. Check systemd logs:
-
-```bash
-sudo journalctl -u glance-agent -f
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
 ```
 
-For standalone execution, logs appear in the terminal.
-
-### Cross-compilation (Linux only)
-
-```bash
-GOOS=linux GOARCH=amd64 go build -o glance-agent-amd64
-GOOS=linux GOARCH=arm64 go build -o glance-agent-arm64
-```
+Some exclusions apply to scripts which may be licenses with the MIT license - these files are marked in their header.
