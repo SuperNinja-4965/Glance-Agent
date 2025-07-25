@@ -217,12 +217,28 @@ User=glance
 Group=glance
 Environment=SECRET_TOKEN=your-production-token
 Environment=PORT=9012
-ExecStart=/usr/local/bin/glance-agent
+ExecStart=/opt/glance-agent/glance-agent
 Restart=always
 RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
+```
+
+### Ensure the glance user exists
+
+```bash
+sudo useradd --system --no-create-home --shell /bin/false glance
+```
+
+### Copy the binary into the correct location and set the permissions
+
+```bash
+sudo mkdir -p /opt/glance-agent
+sudo cp ./glance-agent.x86_64 /opt/glance-agent/glance-agent
+sudo chown root:root /opt/glance-agent/glance-agent
+sudo chmod +x /opt/glance-agent/glance-agent
+
 ```
 
 ### Enable and Start

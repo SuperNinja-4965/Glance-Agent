@@ -47,11 +47,17 @@ jobs:
       - name: Build Agent
         run: |
           mkdir build
-          go build -o ./build/Glance-Agent
+          GOOS=linux GOARCH=amd64 go build -o ./build/glance-agent.x86_64
+          GOOS=linux GOARCH=arm64 go build -o ./build/glance-agent.aarch64
+          GOOS=linux GOARCH=arm go build -o ./build/glance-agent.arm
+          GOOS=linux GOARCH=386 go build -o ./build/glance-agent.i386
 
       - name: Compress Binary with UPX
         run: |
-          upx --best ./build/Glance-Agent
+          upx --best ./build/glance-agent.x86_64
+          upx --best ./build/glance-agent.aarch64
+          upx --best ./build/glance-agent.arm
+          upx --best ./build/glance-agent.i386
 
       - name: Set Release Prerelease Status
         id: prerelease_check
@@ -74,4 +80,7 @@ jobs:
           prerelease: ${{ steps.prerelease_check.outputs.IS_PRERELEASE }}
           generate_release_notes: true
           files: |
-            ./build/Glance-Agent
+            ./build/glance-agent.x86_64
+            ./build/glance-agent.aarch64
+            ./build/glance-agent.arm
+            ./build/glance-agent.i386
