@@ -4,12 +4,13 @@ FROM golang:1.24-alpine AS builder
 RUN mkdir -p /build
 COPY . /build
 
+# Set the working directory
+WORKDIR /build
+
 # Download dependencies
 RUN go mod download
 # Double check for any issues
 RUN go tool golangci-lint run
-
-WORKDIR /build
 
 # Build the Go application
 RUN go build -o ./build/glance-agent
