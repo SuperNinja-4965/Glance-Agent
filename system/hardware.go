@@ -48,12 +48,6 @@ func GetSystemInfo() (*SystemInfo, error) {
 		}
 	}
 
-	// Get CPU load averages
-	load1, load15, err := getLoadAverage()
-	if err != nil {
-		return nil, err
-	}
-
 	// Gather memory information
 	memInfo, err := getMemoryInfo()
 	if err != nil {
@@ -71,6 +65,13 @@ func GetSystemInfo() (*SystemInfo, error) {
 	if !disabledFeatures.DisableCPULoad {
 		// Get number of CPU cores for load percentage calculation
 		cpuCount := runtime.NumCPU()
+
+		// Get CPU load averages
+		load1, load15, err := getLoadAverage()
+		if err != nil {
+			return nil, err
+		}
+
 		// Calculate load percentages based on CPU count
 		// Load average of 1.0 = 100% utilization on single-core system
 		load1Percent = int((load1 / float64(cpuCount)) * 100)
