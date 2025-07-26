@@ -77,7 +77,7 @@ func showUsage() {
 	fmt.Println("  DISABLE_CPU_LOAD=true")
 	fmt.Println("  DISABLE_TEMPERATURE=true")
 	fmt.Println("")
-	fmt.Printf("Glance Agent Copyright (C) Ava Glass <SuperNinja_4965> \nThis program comes as is with ABSOLUTELY NO WARRANTY. \nThis is free software, and you are welcome to redistribute it \nunder certain conditions; For details please visit https://github.com/SuperNinja-4965/Glance-Agent/blob/main/LICENSE.")
+	fmt.Printf("Glance Agent Copyright (C) Ava Glass <SuperNinja_4965> \nThis program comes as is with ABSOLUTELY NO WARRANTY. \nThis is free software, and you are welcome to redistribute it \nunder certain conditions; For details please visit https://github.com/SuperNinja-4965/Glance-Agent/blob/main/LICENSE.\n\n")
 }
 
 func LoadConfig(version string) {

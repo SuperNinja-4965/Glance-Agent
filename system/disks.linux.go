@@ -20,7 +20,10 @@ package system
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -112,29 +115,19 @@ func getMountPoints() ([]MountPoint, error) {
 			continue
 		}
 
-		// Get filesystem statistics using syscall
-		var stat syscall.Statfs_t
-		if err := syscall.Statfs(mountpoint, &stat); err != nil {
-			continue // Skip if we can't get stats
+		var totalMB, usedMB, usedPercent int
+		var err error
+
+		// Handle ZFS filesystems specially
+		if fstype == "zfs" {
+			totalMB, usedMB, usedPercent, err = getZFSUsage(mountpoint)
+		} else {
+			totalMB, usedMB, usedPercent, err = getUsedSpace(mountpoint)
 		}
 
-		// Use fragment size if available, otherwise fall back to block size
-		blockSize := uint64(stat.Frsize)
-		if blockSize == 0 {
-			blockSize = uint64(stat.Bsize)
-		}
-
-		// Calculate disk usage in bytes
-		total := stat.Blocks * blockSize     // Total space
-		available := stat.Bavail * blockSize // Available space for non-root users
-		used := total - available            // Actually used space
-
-		// Convert to megabytes
-		totalMB := int(total / (1024 * 1024))
-		usedMB := int(used / (1024 * 1024))
-		usedPercent := 0
-		if total > 0 {
-			usedPercent = int((used * 100) / total)
+		if err != nil {
+			log.Println("Error getting used space for ", mountpoint, ": ", err)
+			continue // Skip mountpoints with errors
 		}
 
 		// Only include filesystems with actual storage capacity
@@ -151,4 +144,84 @@ func getMountPoints() ([]MountPoint, error) {
 	}
 
 	return mountPoints, nil
+}
+
+// getUsedSpace calculates disk usage for a given mountpoint
+func getUsedSpace(mountpoint string) (int, int, int, error) {
+	// Get filesystem statistics using syscall
+	var stat syscall.Statfs_t
+	if err := syscall.Statfs(mountpoint, &stat); err != nil {
+		return 0, 0, 0, fmt.Errorf("failed to get filesystem stats for %s: %w", mountpoint, err)
+	}
+
+	// Use fragment size if available, otherwise fall back to block size
+	blockSize := uint64(stat.Frsize)
+	if blockSize == 0 {
+		blockSize = uint64(stat.Bsize)
+	}
+
+	// Calculate disk usage in bytes
+	total := stat.Blocks * blockSize     // Total space
+	available := stat.Bavail * blockSize // Available space for non-root users
+	used := total - available            // Actually used space
+
+	// Convert to megabytes
+	totalMB := int(total / (1024 * 1024))
+	usedMB := int(used / (1024 * 1024))
+	usedPercent := 0
+	if total > 0 {
+		usedPercent = int((used * 100) / total)
+	}
+
+	return totalMB, usedMB, usedPercent, nil
+}
+
+// getZFSUsage gets storage usage for ZFS datasets using the zfs command
+func getZFSUsage(mountpoint string) (int, int, int, error) {
+	// Get the ZFS dataset name from mountpoint
+	cmd := exec.Command("zfs", "list", "-H", "-o", "name", mountpoint)
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("failed to get ZFS dataset for %s: %w", mountpoint, err)
+	}
+
+	dataset := strings.TrimSpace(string(output))
+	if dataset == "" {
+		return 0, 0, 0, fmt.Errorf("no ZFS dataset found for mountpoint %s", mountpoint)
+	}
+
+	// Get used and available space in bytes
+	cmd = exec.Command("zfs", "get", "-Hp", "-o", "value", "used,available", dataset)
+	output, err = cmd.Output()
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("failed to get ZFS usage for %s: %w", dataset, err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(lines) < 2 {
+		return 0, 0, 0, fmt.Errorf("unexpected zfs get output format")
+	}
+
+	used, err := strconv.ParseUint(strings.TrimSpace(lines[0]), 10, 64)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("failed to parse used space: %w", err)
+	}
+
+	available, err := strconv.ParseUint(strings.TrimSpace(lines[1]), 10, 64)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("failed to parse available space: %w", err)
+	}
+
+	// Calculate totals
+	total := used + available
+	usedPercent := 0
+	if total > 0 {
+		usedPercent = int((used * 100) / total)
+	}
+
+	// Convert to megabytes
+	totalMB := int(total / (1024 * 1024))
+	usedMB := int(used / (1024 * 1024))
+
+	return totalMB, usedMB, usedPercent, nil
 }
