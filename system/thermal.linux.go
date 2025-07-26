@@ -57,7 +57,6 @@ func GetThermalZones() ([]ThermalZone, error) {
 	// Iterate through all entries in the thermal directory
 	for _, entry := range entries {
 		if !strings.HasPrefix(entry.Name(), "thermal_zone") {
-			log.Println("Skipping non-thermal zone entry:", entry.Name())
 			continue
 		}
 
@@ -94,6 +93,8 @@ func GetThermalZones() ([]ThermalZone, error) {
 		zones = append(zones, zone)
 	}
 
+	fmt.Println("Detected zones:", zones)
+
 	return zones, nil
 }
 
@@ -106,12 +107,12 @@ func SelectPrimaryCPUThermalZone() (ThermalZone, error) {
 	preferredTypes := []string{
 		"x86_pkg_temp",
 		"cpu_thermal",
+		"cpu-thermal",
 		"coretemp",
 		"k10temp",
 		"proc_thermal",
 		"acpitz",
 	}
-	fmt.Println("Checking zones:", zones)
 
 	// Check for zones with preferred types
 	// return the first one found
@@ -134,7 +135,6 @@ func getCPUTemperature() int {
 	if thermalZone < 0 {
 		zone, err := SelectPrimaryCPUThermalZone()
 		if err != nil {
-			fmt.Println(zone, err)
 			thermalZone = 0 // Use the first detected zone
 		} else {
 			fmt.Println("Detected primary CPU thermal zone:", zone.Name)
