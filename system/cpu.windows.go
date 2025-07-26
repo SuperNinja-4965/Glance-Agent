@@ -28,47 +28,6 @@ import (
 	"time"
 )
 
-// getCPUTemperature attempts to get CPU temperature on Windows
-// Returns temperature in Celsius, or 0 if unavailable
-func getCPUTemperature() int {
-	// Try WMI first (most reliable method)
-	if temp := getTemperatureFromWMI(); temp > 0 {
-		return temp
-	}
-
-	// Temperature monitoring on Windows is limited without admin privileges
-	// Most methods require WMI or specialized drivers
-	return 0 // Temperature not available
-}
-
-// getTemperatureFromWMI uses WMI to get CPU temperature
-func getTemperatureFromWMI() int {
-	// Use wmic to query temperature from WMI
-	cmd := exec.Command("wmic", "/namespace:\\\\root\\wmi", "path", "MSAcpi_ThermalZoneTemperature", "get", "CurrentTemperature", "/value")
-	output, err := cmd.Output()
-	if err != nil {
-		return 0
-	}
-
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "CurrentTemperature=") {
-			tempStr := strings.TrimPrefix(line, "CurrentTemperature=")
-			if temp, err := strconv.Atoi(tempStr); err == nil {
-				// WMI returns temperature in tenths of Kelvin
-				// Convert to Celsius
-				celsius := (temp / 10) - 273
-				if celsius > 0 && celsius < 150 { // Sanity check
-					return celsius
-				}
-			}
-		}
-	}
-
-	return 0
-}
-
 // LoadTracker stores exponentially weighted averages of CPU load over time
 type LoadTracker struct {
 	sync.Mutex

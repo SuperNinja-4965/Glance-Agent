@@ -24,24 +24,6 @@ import (
 	"strings"
 )
 
-// getCPUTemperature reads CPU temperature from thermal zone
-// Returns temperature in Celsius, or 0 if unavailable
-func getCPUTemperature() int {
-	data, err := os.ReadFile("/sys/class/thermal/thermal_zone0/temp")
-	if err != nil {
-		return 0 // Temperature not available
-	}
-
-	tempStr := strings.TrimSpace(string(data))
-	temp, err := strconv.Atoi(tempStr)
-	if err != nil {
-		return 0
-	}
-
-	// Convert from millidegrees to degrees Celsius
-	return temp / 1000
-}
-
 // getLoadAverage reads system load averages from /proc/loadavg
 // Returns 1-minute and 15-minute load averages
 func getLoadAverage() (float64, float64, error) {

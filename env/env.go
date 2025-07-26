@@ -22,6 +22,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strconv"
 )
 
 // Variables to hold configuration
@@ -30,6 +32,7 @@ var (
 	port                      string                     // Server port number
 	ignoreMountpoints         string                     // Comma-separated list of mountpoints to ignore
 	overrideIgnoreMountpoints string                     // Comma-separated list to override default ignored mountpoints
+	thermalZone               int                        // Path to thermal zone for temperature monitoring (LUNUX ONLY)
 	showHelp                  bool                       // Show help message
 	appVersion                string                     // Application version, set by build process
 	featureToggles            system.FeatureToggleStruct // Feature toggles
@@ -57,6 +60,8 @@ func showUsage() {
 	fmt.Println("  PORT                           Server port number (default: 9012)")
 	fmt.Println("  IGNORE_MOUNTPOINTS             Comma-separated additional mountpoints to ignore")
 	fmt.Println("  OVERRIDE_IGNORED_MOUNTPOINTS   Comma-separated override for default ignored mountpoints")
+	fmt.Println("  THERMAL_ZONE                   Override the thermal zone for temperature monitoring (Linux only).")
+	fmt.Println("                                 Zones can be listed in /sys/class/thermal/")
 	fmt.Println("  DISABLE_CPU_LOAD               Disable CPU load monitoring (default: false)")
 	fmt.Println("  DISABLE_TEMPERATURE            Disable temperature monitoring (default: false)")
 	fmt.Println("  DISABLE_MEMORY                 Disable memory monitoring (default: false)")
@@ -88,6 +93,7 @@ func LoadConfig(version string) {
 	flag.StringVar(&port, "port", "9012", "Server port number")
 	flag.StringVar(&ignoreMountpoints, "ignore-mounts", "", "Comma-separated list of additional mountpoints to ignore")
 	flag.StringVar(&overrideIgnoreMountpoints, "override-mounts", "", "Comma-separated list to override default ignored mountpoints")
+	flag.IntVar(&thermalZone, "thermal-zone", -1, "ID of the thermal zone for temperature monitoring (Linux only)")
 	flag.BoolVar(&showHelp, "help", false, "Show the help message")
 
 	flag.BoolVar(&featureToggles.DisableCPULoad, "disable-cpu", false, "Disable CPU load monitoring")
@@ -123,6 +129,15 @@ func LoadConfig(version string) {
 	// Configure mountpoints
 	configureMountpoints()
 
+	if runtime.GOOS == "linux" {
+		// Set thermal zone for CPU temperature monitoring
+		system.SetCPUThermalZone(thermalZone)
+	} else {
+		if thermalZone != 0 {
+			log.Printf("Thermal zone is only applicable on Linux. Ignoring value %d", thermalZone)
+		}
+	}
+
 	// Set what features are enabled/disabled
 	system.SetFeatureToggles(featureToggles)
 
@@ -142,6 +157,7 @@ func configureFromSources() {
 	swapFlagSet := false
 	diskFlagSet := false
 	hostFlagSet := false
+	thermalZoneSet := false
 
 	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
@@ -161,6 +177,8 @@ func configureFromSources() {
 			diskFlagSet = true
 		case "disable-host":
 			hostFlagSet = true
+		case "thermal-zone":
+			thermalZoneSet = true
 		}
 	})
 
@@ -222,6 +240,17 @@ func configureFromSources() {
 	if !hostFlagSet {
 		if envVal := os.Getenv("DISABLE_HOST"); envVal != "" {
 			featureToggles.DisableHost = envVal == "true"
+		}
+	}
+
+	if !thermalZoneSet {
+		if envVal := os.Getenv("THERMAL_ZONE"); envVal != "" {
+			var err error
+			thermalZone, err = strconv.Atoi(envVal)
+			if err != nil {
+				log.Printf("Invalid THERMAL_ZONE value: %s.", envVal)
+				thermalZone = -1 // Default to -1 if conversion fails. (autodetect)
+			}
 		}
 	}
 }
