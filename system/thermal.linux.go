@@ -111,7 +111,7 @@ func SelectPrimaryCPUThermalZone() (ThermalZone, error) {
 		"proc_thermal",
 		"acpitz",
 	}
-	fmt.Println("Checking zone:", zones)
+	fmt.Println("Checking zones:", zones)
 
 	// Check for zones with preferred types
 	// return the first one found
