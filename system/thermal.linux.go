@@ -56,7 +56,8 @@ func GetThermalZones() ([]ThermalZone, error) {
 
 	// Iterate through all entries in the thermal directory
 	for _, entry := range entries {
-		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), "thermal_zone") {
+		if !strings.HasPrefix(entry.Name(), "thermal_zone") {
+			log.Println("Skipping non-thermal zone entry:", entry.Name())
 			continue
 		}
 
@@ -67,6 +68,7 @@ func GetThermalZones() ([]ThermalZone, error) {
 		// Read type
 		typeData, err := os.ReadFile(typePath)
 		if err != nil {
+			log.Println("Skipping zone due to read error on type:", entry.Name(), err)
 			continue // skip if we can't read type
 		}
 		zoneType := strings.TrimSpace(string(typeData))
@@ -74,10 +76,12 @@ func GetThermalZones() ([]ThermalZone, error) {
 		// Read temperature
 		tempData, err := os.ReadFile(tempPath)
 		if err != nil {
+			log.Println("Skipping zone due to read error on temp:", entry.Name(), err)
 			continue // skip if we can't read temp
 		}
 		tempMilli, err := strconv.Atoi(strings.TrimSpace(string(tempData)))
 		if err != nil {
+			log.Println("Skipping zone due to invalid temperature format:", entry.Name(), err)
 			continue // invalid number
 		}
 		tempC := float64(tempMilli) / 1000.0
@@ -93,10 +97,10 @@ func GetThermalZones() ([]ThermalZone, error) {
 	return zones, nil
 }
 
-func SelectPrimaryCPUThermalZone() (*ThermalZone, error) {
+func SelectPrimaryCPUThermalZone() (ThermalZone, error) {
 	zones, err := GetThermalZones()
 	if err != nil {
-		return nil, err
+		return ThermalZone{}, err
 	}
 
 	preferredTypes := []string{
@@ -107,19 +111,20 @@ func SelectPrimaryCPUThermalZone() (*ThermalZone, error) {
 		"proc_thermal",
 		"acpitz",
 	}
+	fmt.Println("Checking zone:", zones)
 
 	// Check for zones with preferred types
 	// return the first one found
 	for _, preferred := range preferredTypes {
 		for _, zone := range zones {
 			if zone.Type == preferred {
-				return &zone, nil
+				return zone, nil
 			}
 		}
 	}
 
 	// No preferred zone found
-	return nil, nil
+	return ThermalZone{}, fmt.Errorf("no preferred CPU thermal zone found")
 }
 
 // getCPUTemperature reads CPU temperature from thermal zone
@@ -128,9 +133,11 @@ func getCPUTemperature() int {
 	// Autodetect thermal zone if not set
 	if thermalZone < 0 {
 		zone, err := SelectPrimaryCPUThermalZone()
-		if zone == nil || err != nil {
+		if err != nil {
+			fmt.Println(zone, err)
 			thermalZone = 0 // Use the first detected zone
 		} else {
+			fmt.Println("Detected primary CPU thermal zone:", zone.Name)
 			strippedName := strings.TrimPrefix(zone.Name, "thermal_zone")
 			thermalZone, err = strconv.Atoi(strippedName)
 			if err != nil {
@@ -139,6 +146,8 @@ func getCPUTemperature() int {
 			}
 		}
 	}
+
+	fmt.Println("Using thermal zone:", thermalZone)
 
 	data, err := os.ReadFile(fmt.Sprintf("/sys/class/thermal/thermal_zone%d/temp", thermalZone))
 	if err != nil {
