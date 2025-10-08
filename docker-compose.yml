@@ -11,6 +11,7 @@ services:
       - SECRET_TOKEN=CHANGE_ME
       - PORT=9012
       - IGNORE_MOUNTPOINTS=
+      - WHITELIST_IPS=100.64.0.0/10 # example with tailscale IP range
       - OVERRIDE_IGNORED_MOUNTPOINTS=
       - DISABLE_CPU_LOAD="false"
       - DISABLE_TEMPERATURE="false"

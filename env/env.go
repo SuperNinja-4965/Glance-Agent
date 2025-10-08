@@ -31,8 +31,9 @@ var (
 	secretToken               string                     // Bearer token for API authentication
 	port                      string                     // Server port number
 	ignoreMountpoints         string                     // Comma-separated list of mountpoints to ignore
+	whitelistedIPs            string                     // Whitelisted IPs
 	overrideIgnoreMountpoints string                     // Comma-separated list to override default ignored mountpoints
-	thermalZone               int                        // Path to thermal zone for temperature monitoring (LUNUX ONLY)
+	thermalZone               int                        // Path to thermal zone for temperature monitoring (LINUX ONLY)
 	showHelp                  bool                       // Show help message
 	appVersion                string                     // Application version, set by build process
 	featureToggles            system.FeatureToggleStruct // Feature toggles
@@ -68,6 +69,7 @@ func showUsage() {
 	fmt.Println("  DISABLE_SWAP                   Disable swap monitoring (default: false)")
 	fmt.Println("  DISABLE_DISK                   Disable disk monitoring (default: false)")
 	fmt.Println("  DISABLE_HOST                   Disable host information (default: false)")
+	fmt.Println("  WHITELIST_IPS                  Whitelist IPs (default: empty)")
 	fmt.Println("\nEXAMPLES:")
 	fmt.Printf("  %s -token mytoken -port 8080\n", filepath.Base(os.Args[0]))
 	fmt.Printf("  SECRET_TOKEN=mytoken %s\n", filepath.Base(os.Args[0]))
@@ -93,6 +95,7 @@ func LoadConfig(version string) {
 	flag.StringVar(&port, "port", "9012", "Server port number")
 	flag.StringVar(&ignoreMountpoints, "ignore-mounts", "", "Comma-separated list of additional mountpoints to ignore")
 	flag.StringVar(&overrideIgnoreMountpoints, "override-mounts", "", "Comma-separated list to override default ignored mountpoints")
+	flag.StringVar(&whitelistedIPs, "whitelist-ip", "", "Comma-separated list of IPs to allow")
 	flag.IntVar(&thermalZone, "thermal-zone", -1, "ID of the thermal zone for temperature monitoring (Linux only)")
 	flag.BoolVar(&showHelp, "help", false, "Show the help message")
 
@@ -151,6 +154,7 @@ func configureFromSources() {
 	// Check if flags were actually set by user
 	tokenSet := false
 	portSet := false
+	whitelistedIPsSet := false
 	cpuFlagSet := false
 	tempFlagSet := false
 	memoryFlagSet := false
@@ -165,6 +169,8 @@ func configureFromSources() {
 			tokenSet = true
 		case "port":
 			portSet = true
+		case "whitelistIPs":
+			whitelistedIPsSet = true
 		case "disable-cpu":
 			cpuFlagSet = true
 		case "disable-temp":
@@ -194,6 +200,14 @@ func configureFromSources() {
 		if envPort := os.Getenv("PORT"); envPort != "" {
 			port = envPort
 		}
+	}
+
+	// WHITELIST_IPS: CLI FLAG > env var
+	if !whitelistedIPsSet {
+		if envWhitelistedIPs := os.Getenv("WHITELIST_IPS"); envWhitelistedIPs != "" {
+			whitelistedIPs = envWhitelistedIPs
+		}
+		configureWhitelistIPs()
 	}
 
 	// IGNORE_MOUNTPOINTS: CLI flag > env var

@@ -17,6 +17,7 @@ package auth
 
 import (
 	"encoding/json"
+	"glance-agent/env"
 	"log"
 	"net"
 	"net/http"
@@ -29,8 +30,8 @@ func LocalIPMiddleware(next http.Handler) http.Handler {
 		// Get client IP address
 		clientIP := getClientIP(r)
 
-		// Check if IP is local
-		if !isLocalIP(clientIP) {
+		// Check if IP is local or Whitelisted
+		if !isLocalIP(clientIP) && !IsWhitelisted(clientIP) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusForbidden)
 			if err := json.NewEncoder(w).Encode(map[string]string{
@@ -115,5 +116,31 @@ func isLocalIP(ipStr string) bool {
 		}
 	}
 
+	return false
+}
+
+// IsWhitelisted checks if an IP address is whitelisted
+func IsWhitelisted(ipStr string) bool {
+
+	if len(env.WhitelistIParr) == 0 {
+		return true
+	}
+
+	ip := net.ParseIP(ipStr)
+
+	if ip == nil {
+		return false
+	}
+
+	for _, cidr := range env.WhitelistIParr {
+		_, network, err := net.ParseCIDR(cidr)
+		if err != nil {
+			continue
+		}
+		if network.Contains(ip) {
+
+			return true
+		}
+	}
 	return false
 }
