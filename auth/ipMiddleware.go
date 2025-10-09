@@ -35,8 +35,12 @@ func LocalIPMiddleware(next http.Handler) http.Handler {
 		ip := net.ParseIP(clientIP)
 		// if bellow variable is TRUE you can exit immediately
 		isnotIP := ip == nil
-
-		badIP := !isnotIP && !isLocalIP(ip) && !isWhitelisted(ip)
+		badIP := true
+		if len(env.OverrideWhitelistedIPsarr) == 0 {
+			badIP = !isnotIP && !isLocalIP(ip) && !isWhitelisted(ip)
+		} else {
+			badIP = !isnotIP && !isWhitelistedbyOverride(ip) && !isWhitelisted(ip)
+		}
 		if badIP {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusForbidden)
@@ -127,6 +131,24 @@ func isWhitelisted(ip net.IP) bool {
 	}
 
 	if checkIPBlock(ip, env.WhitelistIParr) {
+		return true
+	}
+
+	return false
+}
+
+// IsWhitelisted checks if an IP address is whitelisted by override
+func isWhitelistedbyOverride(ip net.IP) bool {
+
+	if len(env.WhitelistIParr) == 0 {
+		return true
+	}
+
+	if ip == nil {
+		return false
+	}
+
+	if checkIPBlock(ip, env.OverrideWhitelistedIPsarr) {
 		return true
 	}
 

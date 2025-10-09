@@ -13,6 +13,7 @@ services:
       - IGNORE_MOUNTPOINTS=${IGNORE_MOUNTPOINTS}
       - WHITELIST_IPS=100.64.0.0/10 # example with tailscale IP range
       - OVERRIDE_IGNORED_MOUNTPOINTS=
+      - OVERRIDE_WHITELIST_IPS=
       - DISABLE_CPU_LOAD="false"
       - DISABLE_TEMPERATURE="false"
       - DISABLE_MEMORY="false"

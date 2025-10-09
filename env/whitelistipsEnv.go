@@ -21,15 +21,25 @@ import (
 )
 
 var WhitelistIParr []string
+var OverrideWhitelistedIPsarr []string
 
 // configureWhitelistIPs sets up whitelistIP ignore lists
 func configureWhitelistIPs() {
-	// Add extra mountpoints from configuration
+	// Add extra whitelistIPs from configuration
 	if whitelistedIPs != "" {
 		WhitelistIParr = strings.Split(whitelistedIPs, ",")
 		for i, mp := range WhitelistIParr {
 			WhitelistIParr[i] = strings.TrimSpace(mp)
 		}
 		log.Printf("Added whitelisted IPs: %v", WhitelistIParr)
+	}
+
+	// Override ignored mountpoints if specified
+	if overrideWhitelistedIPs != "" {
+		OverrideWhitelistedIPsarr = strings.Split(overrideWhitelistedIPs, ",")
+		for i, mp := range OverrideWhitelistedIPsarr {
+			OverrideWhitelistedIPsarr[i] = strings.TrimSpace(mp)
+		}
+		log.Printf("Override ignored whitelistIPs: %v", OverrideWhitelistedIPsarr)
 	}
 }
