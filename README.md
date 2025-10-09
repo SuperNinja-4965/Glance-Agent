@@ -190,8 +190,8 @@ curl -H "Authorization: Bearer your-secret-token" \
 
 ### Available Features
 
-| Feature     | CLI Flag           | Environment Variable  | Description                                    |
-| ----------- | ------------------ | --------------------- | ---------------------------------------------- |
+| Feature     | CLI Flag             | Environment Variable    | Description                                    |
+| ----------- | -------------------- | ----------------------- | ---------------------------------------------- |
 | CPU Load    | `--disable-cpu`    | `DISABLE_CPU_LOAD`    | Disables the CPU load averages and percentages |
 | Temperature | `--disable-temp`   | `DISABLE_TEMPERATURE` | Disables the CPU temperature monitoring        |
 | Memory      | `--disable-memory` | `DISABLE_MEMORY`      | Disables the RAM usage statistics              |
@@ -208,6 +208,13 @@ The following mountpoints are ignored by default:
 - `/snap`, `/boot/efi`, `/dev`, `/proc`, `/sys`, `/run`
 - `/tmp`, `/var/tmp`, `/dev/shm`, `/run/lock`
 - `/sys/fs/cgroup`, `/boot/grub`, `/var/lib/docker`
+
+#### Docker
+
+The sample .env file contains:
+
+- `/usr/lib/os-release`, `/etc/resolv.conf`
+- `/etc/hostname`,`/etc/hosts`
 
 #### Windows
 

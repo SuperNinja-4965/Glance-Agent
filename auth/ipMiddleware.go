@@ -31,11 +31,17 @@ func LocalIPMiddleware(next http.Handler) http.Handler {
 		clientIP := getClientIP(r)
 
 		// Check if IP is local or Whitelisted
-		if !isLocalIP(clientIP) && !IsWhitelisted(clientIP) {
+
+		ip := net.ParseIP(clientIP)
+		// if bellow variable is TRUE you can exit immediately
+		isnotIP := ip == nil
+
+		badIP := !isnotIP && !isLocalIP(ip) && !isWhitelisted(ip)
+		if badIP {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusForbidden)
 			if err := json.NewEncoder(w).Encode(map[string]string{
-				"error": "Access denied: Only local connections allowed",
+				"error": "Access denied: Only local or whitelisted connections allowed",
 			}); err != nil {
 				http.Error(w, "Failed to encode error response", http.StatusInternalServerError)
 			}
@@ -70,11 +76,7 @@ func getClientIP(r *http.Request) string {
 }
 
 // isLocalIP checks if an IP address is a local/private address
-func isLocalIP(ipStr string) bool {
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		return false
-	}
+func isLocalIP(ip net.IP) bool {
 
 	// Check for IPv4 loopback (127.0.0.0/8)
 	if ip.IsLoopback() {
@@ -94,14 +96,8 @@ func isLocalIP(ipStr string) bool {
 		"169.254.0.0/16", // Link-local
 	}
 
-	for _, cidr := range privateRanges {
-		_, network, err := net.ParseCIDR(cidr)
-		if err != nil {
-			continue
-		}
-		if network.Contains(ip) {
-			return true
-		}
+	if checkIPBlock(ip, privateRanges) {
+		return true
 	}
 
 	// Check for private IPv6 ranges
@@ -120,25 +116,32 @@ func isLocalIP(ipStr string) bool {
 }
 
 // IsWhitelisted checks if an IP address is whitelisted
-func IsWhitelisted(ipStr string) bool {
+func isWhitelisted(ip net.IP) bool {
 
 	if len(env.WhitelistIParr) == 0 {
 		return true
 	}
 
-	ip := net.ParseIP(ipStr)
-
 	if ip == nil {
 		return false
 	}
 
-	for _, cidr := range env.WhitelistIParr {
+	if checkIPBlock(ip, env.WhitelistIParr) {
+		return true
+	}
+
+	return false
+}
+
+// function to check CIDR block for an IP
+func checkIPBlock(ip net.IP, ipArray []string) bool {
+
+	for _, cidr := range ipArray {
 		_, network, err := net.ParseCIDR(cidr)
 		if err != nil {
 			continue
 		}
 		if network.Contains(ip) {
-
 			return true
 		}
 	}
