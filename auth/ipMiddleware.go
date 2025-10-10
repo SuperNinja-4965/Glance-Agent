@@ -37,10 +37,11 @@ func LocalIPMiddleware(next http.Handler) http.Handler {
 		isnotIP := ip == nil
 		badIP := true
 		if !env.WhitelistOnlyBool {
-			badIP = !isnotIP && !isLocalIP(ip) && !isWhitelisted(ip)
+			badIP = isnotIP || (!isLocalIP(ip) && !isWhitelisted(ip))
 		} else {
-			badIP = !isnotIP && !isWhitelisted(ip)
+			badIP = isnotIP || !isWhitelisted(ip)
 		}
+
 		if badIP {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusForbidden)
@@ -123,7 +124,7 @@ func isLocalIP(ip net.IP) bool {
 func isWhitelisted(ip net.IP) bool {
 
 	if len(env.WhitelistIParr) == 0 {
-		return true
+		return false
 	}
 
 	if ip == nil {
@@ -140,14 +141,22 @@ func isWhitelisted(ip net.IP) bool {
 // function to check CIDR block for an IP
 func checkIPBlock(ip net.IP, ipArray []string) bool {
 
-	for _, cidr := range ipArray {
-		_, network, err := net.ParseCIDR(cidr)
-		if err != nil {
+	for _, entry := range ipArray {
+		// Try to parse as CIDR first
+		if _, network, err := net.ParseCIDR(entry); err == nil {
+			if network.Contains(ip) {
+				return true
+			}
 			continue
 		}
-		if network.Contains(ip) {
-			return true
+
+		// If not CIDR, try to parse as single IP
+		if singleIP := net.ParseIP(entry); singleIP != nil {
+			if ip.Equal(singleIP) {
+				return true
+			}
 		}
 	}
+
 	return false
 }
