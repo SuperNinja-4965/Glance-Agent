@@ -14,10 +14,10 @@ services:
       - WHITELIST_IPS=192.168.0.0/16 # example with tailscale IP range
       - OVERRIDE_IGNORED_MOUNTPOINTS=
       - WHITELIST_ONLY=true
-      - DISABLE_CPU_LOAD="false"
-      - DISABLE_TEMPERATURE="false"
-      - DISABLE_MEMORY="false"
-      - DISABLE_SWAP="false"
-      - DISABLE_DISK="false"
-      - DISABLE_HOST="false"
+      - DISABLE_CPU_LOAD=false
+      - DISABLE_TEMPERATURE=false
+      - DISABLE_MEMORY=false
+      - DISABLE_SWAP=false
+      - DISABLE_DISK=false
+      - DISABLE_HOST=false
     restart: unless-stopped

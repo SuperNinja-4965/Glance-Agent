@@ -241,11 +241,6 @@ func configureFromSources() {
 		if envVal := os.Getenv("DISABLE_TEMPERATURE"); envVal != "" {
 			featureToggles.DisableTemperature = envVal == "true"
 		}
-		if featureToggles.DisableTemperature {
-			log.Print("Set to true")
-		} else {
-			log.Print("Set to false")
-		}
 	}
 
 	if !memoryFlagSet {
