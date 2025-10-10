@@ -35,7 +35,7 @@ func LocalIPMiddleware(next http.Handler) http.Handler {
 		ip := net.ParseIP(clientIP)
 		// if bellow variable is TRUE you can exit immediately
 		isnotIP := ip == nil
-		badIP := true
+		var badIP bool
 		if !env.WhitelistOnlyBool {
 			badIP = isnotIP || (!isLocalIP(ip) && !isWhitelisted(ip))
 		} else {
