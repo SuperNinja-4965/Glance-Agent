@@ -71,7 +71,7 @@ func showUsage() {
 	fmt.Println("  DISABLE_SWAP                   Disable swap monitoring (default: false)")
 	fmt.Println("  DISABLE_DISK                   Disable disk monitoring (default: false)")
 	fmt.Println("  DISABLE_HOST                   Disable host information (default: false)")
-	fmt.Println("  WHITELIST_ONLY   			  Disable default IP local connection whitelist (default: false)")
+	fmt.Println("  WHITELIST_ONLY                 Disables the default IP local connection whitelist (default: false)")
 	fmt.Println("\nEXAMPLES:")
 	fmt.Printf("  %s -token mytoken -port 8080\n", filepath.Base(os.Args[0]))
 	fmt.Printf("  SECRET_TOKEN=mytoken %s\n", filepath.Base(os.Args[0]))
