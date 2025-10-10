@@ -33,8 +33,8 @@ var (
 	ignoreMountpoints         string                     // Comma-separated list of mountpoints to ignore
 	whitelistedIPs            string                     // Comma-separated list of whitelisted IPs
 	overrideIgnoreMountpoints string                     // Comma-separated list to override default ignored mountpoints
-	overrideWhitelistedIPs    string                     // Comma-separated list to override default Whitelisted IPs
 	thermalZone               int                        // Path to thermal zone for temperature monitoring (LINUX ONLY)
+	whitelistOnly             bool                       // Disable default IP local connection whitelist
 	showHelp                  bool                       // Show help message
 	appVersion                string                     // Application version, set by build process
 	featureToggles            system.FeatureToggleStruct // Feature toggles
@@ -63,7 +63,6 @@ func showUsage() {
 	fmt.Println("  IGNORE_MOUNTPOINTS             Comma-separated additional mountpoints to ignore")
 	fmt.Println("  WHITELIST_IPS                  Comma-separated additional Whitelist IPs")
 	fmt.Println("  OVERRIDE_IGNORED_MOUNTPOINTS   Comma-separated override for default ignored mountpoints")
-	fmt.Println("  OVERRIDE_WHITELIST_IPS         Comma-separated override for default Whitelist IPs")
 	fmt.Println("  THERMAL_ZONE                   Override the thermal zone for temperature monitoring (Linux only).")
 	fmt.Println("                                 Zones can be listed in /sys/class/thermal/")
 	fmt.Println("  DISABLE_CPU_LOAD               Disable CPU load monitoring (default: false)")
@@ -72,6 +71,7 @@ func showUsage() {
 	fmt.Println("  DISABLE_SWAP                   Disable swap monitoring (default: false)")
 	fmt.Println("  DISABLE_DISK                   Disable disk monitoring (default: false)")
 	fmt.Println("  DISABLE_HOST                   Disable host information (default: false)")
+	fmt.Println("  WHITELIST_ONLY   			  Disable default IP local connection whitelist (default: false)")
 	fmt.Println("\nEXAMPLES:")
 	fmt.Printf("  %s -token mytoken -port 8080\n", filepath.Base(os.Args[0]))
 	fmt.Printf("  SECRET_TOKEN=mytoken %s\n", filepath.Base(os.Args[0]))
@@ -98,8 +98,8 @@ func LoadConfig(version string) {
 	flag.StringVar(&ignoreMountpoints, "ignore-mounts", "", "Comma-separated list of additional mountpoints to ignore")
 	flag.StringVar(&whitelistedIPs, "whitelist-ip", "", "Comma-separated list of IPs to allow")
 	flag.StringVar(&overrideIgnoreMountpoints, "override-mounts", "", "Comma-separated list to override default ignored mountpoints")
-	flag.StringVar(&overrideWhitelistedIPs, "override-whitelist-ip", "", "Comma-separated list to override default IPs to allow")
 	flag.IntVar(&thermalZone, "thermal-zone", -1, "ID of the thermal zone for temperature monitoring (Linux only)")
+	flag.BoolVar(&whitelistOnly, "whitelist-only", false, "Disable default IP local connection whitelist")
 	flag.BoolVar(&showHelp, "help", false, "Show the help message")
 
 	flag.BoolVar(&featureToggles.DisableCPULoad, "disable-cpu", false, "Disable CPU load monitoring")
@@ -159,6 +159,7 @@ func configureFromSources() {
 	// Check if flags were actually set by user
 	tokenSet := false
 	portSet := false
+	whitelistOnlySet := false
 	cpuFlagSet := false
 	tempFlagSet := false
 	memoryFlagSet := false
@@ -173,6 +174,8 @@ func configureFromSources() {
 			tokenSet = true
 		case "port":
 			portSet = true
+		case "whitelist-only":
+			whitelistOnlySet = true
 		case "disable-cpu":
 			cpuFlagSet = true
 		case "disable-temp":
@@ -219,9 +222,12 @@ func configureFromSources() {
 		overrideIgnoreMountpoints = os.Getenv("OVERRIDE_IGNORED_MOUNTPOINTS")
 	}
 
-	// OVERRIDE_WHITELIST_IPS: CLI FLAG > env var
-	if overrideWhitelistedIPs == "" {
-		overrideWhitelistedIPs = os.Getenv("OVERRIDE_WHITELIST_IPS")
+	// WHITELIST_ONLY: CLI FLAG > env var
+	if !whitelistOnlySet {
+		if envVal := os.Getenv("WHITELIST_ONLY"); envVal != "" {
+			log.Print(envVal)
+			whitelistOnly = envVal == "true"
+		}
 	}
 
 	// Feature toggles: CLI flag > env var > default (true)
@@ -234,6 +240,11 @@ func configureFromSources() {
 	if !tempFlagSet {
 		if envVal := os.Getenv("DISABLE_TEMPERATURE"); envVal != "" {
 			featureToggles.DisableTemperature = envVal == "true"
+		}
+		if featureToggles.DisableTemperature {
+			log.Print("Set to true")
+		} else {
+			log.Print("Set to false")
 		}
 	}
 

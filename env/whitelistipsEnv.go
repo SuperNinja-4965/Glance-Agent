@@ -1,6 +1,6 @@
 package env
 
-// Copyright (C) Omar Alawadhi <AlawadhiBOT>
+// Copyright (C) Ava Glass <SuperNinja_4965>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import (
 )
 
 var WhitelistIParr []string
-var OverrideWhitelistedIPsarr []string
+var WhitelistOnlyBool bool
 
 // configureWhitelistIPs sets up whitelistIP ignore lists
 func configureWhitelistIPs() {
@@ -34,12 +34,7 @@ func configureWhitelistIPs() {
 		log.Printf("Added whitelisted IPs: %v", WhitelistIParr)
 	}
 
-	// Override ignored mountpoints if specified
-	if overrideWhitelistedIPs != "" {
-		OverrideWhitelistedIPsarr = strings.Split(overrideWhitelistedIPs, ",")
-		for i, mp := range OverrideWhitelistedIPsarr {
-			OverrideWhitelistedIPsarr[i] = strings.TrimSpace(mp)
-		}
-		log.Printf("Override ignored whitelistIPs: %v", OverrideWhitelistedIPsarr)
-	}
+	WhitelistOnlyBool = whitelistOnly
 }
+
+// Author: Omar Alawadhi
