@@ -52,6 +52,9 @@ export PORT="9012"
 # Additional mountpoints to ignore (comma-separated)
 export IGNORE_MOUNTPOINTS="/mnt/backup,/media,/opt/custom"
 
+# Additional IPs whitelist (comma-separated)
+export ="100.64.0.0/10,fd7a:115c:a1e0::/48"
+
 # Override default ignored mountpoints completely
 export OVERRIDE_IGNORED_MOUNTPOINTS="/snap,/boot/efi,/custom"
 
@@ -98,6 +101,7 @@ Available flags:
 - `-disable-swap`: Disable swap monitoring
 - `-disable-disk`: Disable disk monitoring
 - `-disable-host`: Disable host information
+- `-whitelist-only`: Disable default IP local connection whitelist
 - `-help`: Show help message
 
 ## Usage
