@@ -17,6 +17,7 @@ package auth
 
 import (
 	"encoding/json"
+	"glance-agent/env"
 	"log"
 	"net"
 	"net/http"
@@ -29,12 +30,23 @@ func LocalIPMiddleware(next http.Handler) http.Handler {
 		// Get client IP address
 		clientIP := getClientIP(r)
 
-		// Check if IP is local
-		if !isLocalIP(clientIP) {
+		// Check if IP is local or Whitelisted
+
+		ip := net.ParseIP(clientIP)
+		// if bellow variable is TRUE you can exit immediately
+		isnotIP := ip == nil
+		badIP := true
+		if !env.WhitelistOnlyBool {
+			badIP = isnotIP || (!isLocalIP(ip) && !isWhitelisted(ip))
+		} else {
+			badIP = isnotIP || !isWhitelisted(ip)
+		}
+
+		if badIP {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusForbidden)
 			if err := json.NewEncoder(w).Encode(map[string]string{
-				"error": "Access denied: Only local connections allowed",
+				"error": "Access denied: Only local or whitelisted connections allowed",
 			}); err != nil {
 				http.Error(w, "Failed to encode error response", http.StatusInternalServerError)
 			}
@@ -69,11 +81,7 @@ func getClientIP(r *http.Request) string {
 }
 
 // isLocalIP checks if an IP address is a local/private address
-func isLocalIP(ipStr string) bool {
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		return false
-	}
+func isLocalIP(ip net.IP) bool {
 
 	// Check for IPv4 loopback (127.0.0.0/8)
 	if ip.IsLoopback() {
@@ -93,14 +101,8 @@ func isLocalIP(ipStr string) bool {
 		"169.254.0.0/16", // Link-local
 	}
 
-	for _, cidr := range privateRanges {
-		_, network, err := net.ParseCIDR(cidr)
-		if err != nil {
-			continue
-		}
-		if network.Contains(ip) {
-			return true
-		}
+	if checkIPBlock(ip, privateRanges) {
+		return true
 	}
 
 	// Check for private IPv6 ranges
@@ -112,6 +114,47 @@ func isLocalIP(ipStr string) bool {
 		// Check for unique local (fc00::/7)
 		if len(ip) >= 1 && (ip[0]&0xfe) == 0xfc {
 			return true
+		}
+	}
+
+	return false
+}
+
+// IsWhitelisted checks if an IP address is whitelisted
+func isWhitelisted(ip net.IP) bool {
+
+	if len(env.WhitelistIParr) == 0 {
+		return false
+	}
+
+	if ip == nil {
+		return false
+	}
+
+	if checkIPBlock(ip, env.WhitelistIParr) {
+		return true
+	}
+
+	return false
+}
+
+// function to check CIDR block for an IP
+func checkIPBlock(ip net.IP, ipArray []string) bool {
+
+	for _, entry := range ipArray {
+		// Try to parse as CIDR first
+		if _, network, err := net.ParseCIDR(entry); err == nil {
+			if network.Contains(ip) {
+				return true
+			}
+			continue
+		}
+
+		// If not CIDR, try to parse as single IP
+		if singleIP := net.ParseIP(entry); singleIP != nil {
+			if ip.Equal(singleIP) {
+				return true
+			}
 		}
 	}
 

@@ -52,6 +52,11 @@ export PORT="9012"
 # Additional mountpoints to ignore (comma-separated)
 export IGNORE_MOUNTPOINTS="/mnt/backup,/media,/opt/custom"
 
+# Additional IPs whitelist (comma-separated)
+export WHITELIST_IPS="100.64.0.0/10,fd7a:115c:a1e0::/48"
+# Limit access to whats defined on the whitelist alone
+export WHITELIST_ONLY="false"
+
 # Override default ignored mountpoints completely
 export OVERRIDE_IGNORED_MOUNTPOINTS="/snap,/boot/efi,/custom"
 
@@ -98,6 +103,7 @@ Available flags:
 - `-disable-swap`: Disable swap monitoring
 - `-disable-disk`: Disable disk monitoring
 - `-disable-host`: Disable host information
+- `-whitelist-only`: Disables the default IP local connection whitelist
 - `-help`: Show help message
 
 ## Usage
@@ -190,8 +196,8 @@ curl -H "Authorization: Bearer your-secret-token" \
 
 ### Available Features
 
-| Feature     | CLI Flag           | Environment Variable  | Description                                    |
-| ----------- | ------------------ | --------------------- | ---------------------------------------------- |
+| Feature     | CLI Flag             | Environment Variable    | Description                                    |
+| ----------- | -------------------- | ----------------------- | ---------------------------------------------- |
 | CPU Load    | `--disable-cpu`    | `DISABLE_CPU_LOAD`    | Disables the CPU load averages and percentages |
 | Temperature | `--disable-temp`   | `DISABLE_TEMPERATURE` | Disables the CPU temperature monitoring        |
 | Memory      | `--disable-memory` | `DISABLE_MEMORY`      | Disables the RAM usage statistics              |
@@ -208,6 +214,13 @@ The following mountpoints are ignored by default:
 - `/snap`, `/boot/efi`, `/dev`, `/proc`, `/sys`, `/run`
 - `/tmp`, `/var/tmp`, `/dev/shm`, `/run/lock`
 - `/sys/fs/cgroup`, `/boot/grub`, `/var/lib/docker`
+
+#### Docker
+
+The sample .env file contains:
+
+- `/usr/lib/os-release`, `/etc/resolv.conf`
+- `/etc/hostname`,`/etc/hosts`
 
 #### Windows
 

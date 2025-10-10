@@ -11,11 +11,13 @@ services:
       - SECRET_TOKEN=CHANGE_ME
       - PORT=9012
       - IGNORE_MOUNTPOINTS=
+      - WHITELIST_IPS=
       - OVERRIDE_IGNORED_MOUNTPOINTS=
-      - DISABLE_CPU_LOAD="false"
-      - DISABLE_TEMPERATURE="false"
-      - DISABLE_MEMORY="false"
-      - DISABLE_SWAP="false"
-      - DISABLE_DISK="false"
-      - DISABLE_HOST="false"
+      - WHITELIST_ONLY=false
+      - DISABLE_CPU_LOAD=false
+      - DISABLE_TEMPERATURE=false
+      - DISABLE_MEMORY=false
+      - DISABLE_SWAP=false
+      - DISABLE_DISK=false
+      - DISABLE_HOST=false
     restart: unless-stopped
