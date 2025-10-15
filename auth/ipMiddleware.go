@@ -123,7 +123,7 @@ func isLocalIP(ip net.IP) bool {
 // IsWhitelisted checks if an IP address is whitelisted
 func isWhitelisted(ip net.IP) bool {
 
-	if len(env.WhitelistIParr) == 0 {
+	if len(env.WhitelistIParr) == 0 || env.WhitelistIParr == nil {
 		return false
 	}
 

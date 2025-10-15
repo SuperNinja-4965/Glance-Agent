@@ -32,9 +32,15 @@ func configureWhitelistIPs() {
 			WhitelistIParr[i] = strings.TrimSpace(mp)
 		}
 		log.Printf("Added whitelisted IPs: %v", WhitelistIParr)
+	} else {
+		WhitelistIParr = []string{}
 	}
 
 	WhitelistOnlyBool = whitelistOnly
+
+	if (WhitelistOnlyBool && WhitelistIParr == nil) || (WhitelistOnlyBool && len(WhitelistIParr) == 0) {
+		log.Fatalln("Whitelist only mode enabled and no whitelist defined. Exiting...")
+	}
 }
 
 // Author: Omar Alawadhi

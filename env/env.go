@@ -225,7 +225,6 @@ func configureFromSources() {
 	// WHITELIST_ONLY: CLI FLAG > env var
 	if !whitelistOnlySet {
 		if envVal := os.Getenv("WHITELIST_ONLY"); envVal != "" {
-			log.Print(envVal)
 			whitelistOnly = envVal == "true"
 		}
 	}
