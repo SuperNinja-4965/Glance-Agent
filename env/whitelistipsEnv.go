@@ -40,6 +40,10 @@ func configureWhitelistIPs() {
 
 	if (WhitelistOnlyBool && WhitelistIParr == nil) || (WhitelistOnlyBool && len(WhitelistIParr) == 0) {
 		log.Fatalln("Whitelist only mode enabled and no whitelist defined. Exiting...")
+	} else if WhitelistOnlyBool {
+		log.Println("Whitelist only mode enabled.")
+	} else {
+		log.Println("Whitelist only mode disabled.")
 	}
 }
 
