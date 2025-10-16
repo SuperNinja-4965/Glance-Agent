@@ -11,7 +11,7 @@ WORKDIR /build
 RUN go mod download
 
 # Build the Go application
-RUN go build -o ./build/glance-agent
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o ./build/glance-agent
 
 # Install UPX for binary compression
 RUN apk add --no-cache upx
