@@ -1,4 +1,4 @@
-version := 0.1.8
+version := 0.1.9
 
 CURDIR := $(shell pwd)
 PKG_AMD64 := build/pkg-amd64
@@ -74,27 +74,27 @@ deb:
 	mkdir -p $(PKG_OUT)
 	fpm -s dir -t deb -v $(version) \
 		--architecture amd64 \
-		-C $(PKG_AMD64) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_AMD64) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 	fpm -s dir -t deb -v $(version) \
 		--architecture arm64v6 \
-		-C $(PKG_ARM64V6) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_ARM64V6) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 	fpm -s dir -t deb -v $(version) \
 		--architecture arm64v7 \
-		-C $(PKG_ARM64V7) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_ARM64V7) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 	fpm -s dir -t deb -v $(version) \
 		--architecture arm64 \
-		-C $(PKG_ARM64) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_ARM64) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 	fpm -s dir -t deb -v $(version) \
 		--architecture armhf \
-		-C $(PKG_ARMHF) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_ARMHF) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 	fpm -s dir -t deb -v $(version) \
 		--architecture i386 \
-		-C $(PKG_I386) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_I386) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 .PHONY: rpm
 rpm:
@@ -102,27 +102,27 @@ rpm:
 	mkdir -p $(PKG_OUT)
 	fpm -s dir -t rpm -v $(version) \
 		--architecture amd64 \
-		-C $(PKG_AMD64) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_AMD64) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 	fpm -s dir -t rpm -v $(version) \
 		--architecture arm64v6 \
-		-C $(PKG_ARM64V6) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_ARM64V6) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 	fpm -s dir -t rpm -v $(version) \
 		--architecture arm64v7 \
-		-C $(PKG_ARM64V7) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_ARM64V7) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 	fpm -s dir -t rpm -v $(version) \
 		--architecture arm64 \
-		-C $(PKG_ARM64) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_ARM64) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 	fpm -s dir -t rpm -v $(version) \
 		--architecture armhf \
-		-C $(PKG_ARMHF) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_ARMHF) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 	fpm -s dir -t rpm -v $(version) \
 		--architecture i386 \
-		-C $(PKG_I386) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service
+		-C $(PKG_I386) usr/bin/glance-agent usr/lib/systemd/system/glance-agent.service usr/lib/glance-agent/config.env.example
 
 .PHONY: clean
 clean:
