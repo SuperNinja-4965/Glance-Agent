@@ -293,6 +293,15 @@ curl -H "Authorization: Bearer test-token" \
 ```
 
 ## Deployment
+### Via package
+Various packages are built for each release if possible it's recommended to install the provided package.
+
+This package will install the agent and a service. Simple add a configuration file to /etc/glance-agent/config.env and start the service
+```
+# systemctl enable --now glance-agent.service
+```
+
+Make sure that the config file is readable by the glance user.
 
 ### Systemd Service
 
@@ -301,7 +310,8 @@ Create `/etc/systemd/system/glance-agent.service`:
 ```ini
 [Unit]
 Description=Glance System Monitoring Agent
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
@@ -310,8 +320,14 @@ Group=glance
 Environment=SECRET_TOKEN=your-production-token
 Environment=PORT=9012
 ExecStart=/opt/glance-agent/glance-agent
-Restart=always
-RestartSec=10
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target

@@ -36,6 +36,21 @@ func loadEnvFile() {
 	execDir := filepath.Dir(execPath)
 	envFile := filepath.Join(execDir, ".env")
 
+	// If requested, prefer the system configuration file
+	if useSystemConfig {
+		systemEnv := "/etc/glance-agent/config.env"
+		if _, err := os.Stat(systemEnv); err == nil {
+			if err := godotenv.Load(systemEnv); err != nil {
+				log.Printf("Warning: Error loading system config '%s': %v", systemEnv, err)
+			} else {
+				log.Printf("Loaded configuration from %s", systemEnv)
+			}
+			return
+		}
+		// If not present, continue to check local .env
+		log.Printf("System config not found at %s; falling back to .env", systemEnv)
+	}
+
 	// Check if .env file exists in the same directory as the binary
 	if _, err := os.Stat(envFile); err == nil {
 		if err := godotenv.Load(envFile); err != nil {

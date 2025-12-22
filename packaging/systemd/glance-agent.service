@@ -1,0 +1,22 @@
+[Unit]
+Description=Glance System Monitoring Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=glance
+Group=glance
+EnvironmentFile=/etc/glance-agent/config.env
+ExecStart=/usr/bin/glance-agent
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

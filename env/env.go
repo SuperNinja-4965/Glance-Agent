@@ -38,6 +38,7 @@ var (
 	showHelp                  bool                       // Show help message
 	appVersion                string                     // Application version, set by build process
 	featureToggles            system.FeatureToggleStruct // Feature toggles
+	useSystemConfig           bool                       // Whether to use system configuration file
 )
 
 // GetSecretToken returns the configured secret token
@@ -78,6 +79,8 @@ func showUsage() {
 	fmt.Printf("  %s -token mytoken -disable-temp -disable-swap\n", filepath.Base(os.Args[0]))
 	fmt.Println("\n.ENV FILE:")
 	fmt.Println("  The application will automatically load a .env file from the same directory as the binary.")
+	fmt.Println("  You can set the same configuration options in the .env file as environment variables.")
+	fmt.Println("  If you use the --use-system-config flag, it will first attempt to load /etc/glance-agent/config.env")
 	fmt.Println("  Format:")
 	fmt.Println("  SECRET_TOKEN=your-secret-token")
 	fmt.Println("  PORT=9012")
@@ -108,6 +111,7 @@ func LoadConfig(version string) {
 	flag.BoolVar(&featureToggles.DisableSwap, "disable-swap", false, "Disable swap monitoring")
 	flag.BoolVar(&featureToggles.DisableDisk, "disable-disk", false, "Disable disk monitoring")
 	flag.BoolVar(&featureToggles.DisableHost, "disable-host", false, "Disable host information")
+	flag.BoolVar(&useSystemConfig, "use-system-config", false, "Use system configuration file if available (/etc/glance-agent/config.env)")
 
 	// Custom usage function
 	flag.Usage = showUsage

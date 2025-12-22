@@ -41,7 +41,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        go-version: ["1.24"]
+        go-version: ["1.25"]
 
     steps:
       - name: Checkout (Full depth)
@@ -66,29 +66,7 @@ jobs:
 
       - name: Build Agent
         run: |
-          mkdir build
-          GOOS=linux GOARCH=amd64 go build -o ./build/glance-agent.x86_64
-          GOOS=linux GOARCH=arm64 GOARM=6 go build -o ./build/glance-agent.aarch64-v6
-          GOOS=linux GOARCH=arm64 GOARM=7 go build -o ./build/glance-agent.aarch64-v7
-          GOOS=linux GOARCH=arm64 go build -o ./build/glance-agent.aarch64
-          GOOS=linux GOARCH=arm go build -o ./build/glance-agent.arm
-          GOOS=linux GOARCH=386 go build -o ./build/glance-agent.i386
-          GOOS=windows GOARCH=amd64 go build -o ./build/glance-agent.x86_64.exe
-          GOOS=windows GOARCH=arm64 GOARM=6 go build -o ./build/glance-agent.aarch64-v6.exe
-          GOOS=windows GOARCH=arm64 GOARM=7 go build -o ./build/glance-agent.aarch64-v7.exe
-          GOOS=windows GOARCH=arm64 go build -o ./build/glance-agent.aarch64.exe
-
-      - name: Compress Binary with UPX
-        run: |
-          upx --best ./build/glance-agent.x86_64
-          upx --best ./build/glance-agent.aarch64-v6
-          upx --best ./build/glance-agent.aarch64-v7
-          upx --best ./build/glance-agent.aarch64
-          upx --best ./build/glance-agent.arm
-          upx --best ./build/glance-agent.i386
-          upx --best ./build/glance-agent.x86_64.exe
-          # upx --best ./build/glance-agent.aarch64.exe # Disabled as this is not supported by UPX
-
+          make glance-agent deb
       - name: Set Release Prerelease Status
         id: prerelease_check
         if: ${{ github.event_name != 'workflow_dispatch' }}
@@ -122,6 +100,7 @@ jobs:
             ./build/glance-agent.aarch64-v6.exe
             ./build/glance-agent.aarch64-v7.exe
             ./build/glance-agent.aarch64.exe
+            ./build/packages/*
 
       - name: 'Upload Artifact'
         uses: actions/upload-artifact@v4
@@ -140,6 +119,7 @@ jobs:
             ./build/glance-agent.aarch64-v6.exe
             ./build/glance-agent.aarch64-v7.exe
             ./build/glance-agent.aarch64.exe
+            ./build/packages/*
 
 
   build-docker:

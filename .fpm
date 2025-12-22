@@ -1,0 +1,8 @@
+-s dir
+-n glance-agent
+--license gpl3
+--url "https://github.com/SuperNinja-4965/Glance-Agent"
+--architecture amd64
+-p build/packages
+--after-install scripts/post-install.sh
+--maintainer "Ava Glass <SuperNinja_4965>"
