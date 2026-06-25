@@ -1,4 +1,4 @@
-version := 0.1.9
+version := 0.1.11
 
 CURDIR := $(shell pwd)
 PKG_AMD64 := build/pkg-amd64

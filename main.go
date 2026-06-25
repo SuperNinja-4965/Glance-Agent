@@ -29,7 +29,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-const Version = "0.1.9"
+const Version = "0.1.11"
 
 // init runs before main() and initializes configuration
 func init() {
